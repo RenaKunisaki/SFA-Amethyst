@@ -5,6 +5,7 @@ include $(PWD)/config.mk
 
 ORIGISO ?= original.iso
 PATCHISO ?= patched.iso
+DATA ?= ../browser/data
 ORIGDOL = $(DISCROOT)/../sys/main.dol.orig
 
 all: $(BUILDDIR) $(BUILDDIR)/dolpatch.bin $(BUILDDIR)/bootstrap.bin $(patsubst %,$(BUILDDIR)/%.elf,$(PATCHES))
@@ -56,7 +57,7 @@ install: all
 	@cp $(BUILDDIR)/bootstrap.bin $(DISCROOT)/boot.bin
 	@cp $(BUILDDIR)/main.patched.dol $(DISCROOT)/../sys/main.dol
 	@./tools/elf2bin.py $(BUILDDIR) $(DISCROOT)
-	@./tools/makebitnames.py ../data/U0/gamebits.xml $(DISCROOT)/bitnames.dat
+	@./tools/makebitnames.py $(DATA)/U0/gamebits.xml $(DISCROOT)/bitnames.dat
 
 # extract ISO
 $(ORIGDOL): $(ORIGISO)

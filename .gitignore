@@ -1,0 +1,66 @@
+# misc/temp files
+**/~*
+*.log
+*.bin
+*.gci
+*.img
+*.iso
+*.dol
+*.old
+*.rom
+*.n64
+*.v64
+*.z64
+*.state
+*.tmp
+*.lock*
+__pycache__
+**/build/*
+**/bin/*
+**/old/*
+**/dump/*
+**/discroot/*
+**/junk/*
+**/tmp/*
+dp/**
+root/**
+demo/**
+SFAModelTesting/**
+SFAModelsBin/**
+saves/**
+v1.01/**
+SFA.rep.zip
+compile_commands.json
+**/.vscode/*
+**/.cache/*
+
+# auto generated files
+amethyst/patchfiles/files/bitnames.dat
+**/amethyst.arg
+
+# from https://github.com/github/gitignore
+# Object files
+*.o
+*.ko
+*.obj
+*.elf
+
+# Libraries
+*.lib
+*.a
+*.la
+*.lo
+
+# Shared objects (inc. Windows DLLs)
+*.dll
+*.so
+*.so.*
+*.dylib
+
+# Executables
+*.exe
+*.out
+*.app
+*.i*86
+*.x86_64
+*.hex

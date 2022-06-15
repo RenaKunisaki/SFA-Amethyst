@@ -47,6 +47,7 @@ CompareFunc compare) {
         }
     }
     //swap items[iEnd], items[iPivot]
+    if(iPivot == iEnd) return -1; //avoid infinite loop with duplicate items
     swap = items[iEnd];
     items[iEnd] = items[iPivot];
     items[iPivot] = swap;
@@ -56,6 +57,7 @@ CompareFunc compare) {
 void quicksort(const void **items, int iStart, int iEnd, CompareFunc compare) {
     if(iStart < iEnd) {
         int iPivot = partition(items, iStart, iEnd, compare);
+        if(iPivot < 0) return; //avoid infinite loop
         quicksort(items, iStart,     iPivot - 1, compare);
         quicksort(items, iPivot + 1, iEnd,       compare);
     }

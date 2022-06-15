@@ -169,7 +169,7 @@ void initMapHacks();
 void runMenu();
 
 //menuDebugGameBits.c
-extern s8 *bitNames;
+extern const char *bitNames;
 BitTableEntry* getBitTableEntry(int bit);
 const char* getBitName(int bit);
 

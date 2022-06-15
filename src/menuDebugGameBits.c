@@ -7,7 +7,7 @@
 #define BIT_MENU_WIDTH  (SCREEN_WIDTH  - (BIT_MENU_XPOS * 2))
 #define BIT_MENU_HEIGHT (SCREEN_HEIGHT - (BIT_MENU_YPOS * 2))
 #define BIT_MENU_NUM_LINES ((BIT_MENU_HEIGHT / LINE_HEIGHT) - 3)
-s8 *bitNames = NULL;
+const char *bitNames = NULL;
 static u8 bitMenuCursorX = 7;
 
 enum {
@@ -104,19 +104,28 @@ BitTableEntry* getBitTableEntry(int bit) {
 }
 
 const char* getBitName(int bit) {
+    static int size = 0;
+    if(size > 0 && size < 8) return "";
     if(!bitNames) {
         //try to load bitnames.dat
-        bitNames = loadFileByPath("bitnames.dat", NULL);
+        bitNames = loadFileByPath("bitnames.dat", &size);
+        //DPRINT("bitnames.dat size %d @ 0x%08X\n", size, bitNames);
+        if(size < 8) { //safeguard because somehow we got a 1-byte file
+            free(bitNames);
+            bitNames = NULL;
+        }
         if(!bitNames) return "";
         registerFreeablePtr((void**)&bitNames, "bitnames.dat");
     }
 
     //this is hilariously inefficient time-wise, but saves a ton of memory.
+    const char *end = ((const char*)&bitNames[size]);
     const char *res = bitNames;
-    while(bit > 0) {
+    while(bit > 0 && res < end) {
         if(res[0] == 0) bit--;
         res++;
     }
+    if(res < (const char*)bitNames || res >= end) return "";
     return res;
 }
 

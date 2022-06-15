@@ -116,6 +116,8 @@ bool getObjName(char *dest, ObjInstance *obj) {
 }
 
 int strcmpi(const char *sa, const char *sb) {
+    if(!PTR_VALID(sa)) sa = "";
+    if(!PTR_VALID(sb)) sb = "";
     while(*sa && *sb) {
         char a = *(sa++);
         char b = *(sb++);

@@ -32,6 +32,7 @@ void quicksortStrings(const char **items, int iStart, int iEnd) {
 
 //generic quicksort
 
+static int hackCount;
 static int partition(const void **items, int iStart, int iEnd,
 CompareFunc compare) {
     const char *pivot = items[iEnd];
@@ -46,19 +47,30 @@ CompareFunc compare) {
             iPivot++;
         }
     }
+    if(iPivot == iEnd) {
+        hackCount++;
+        return iPivot;
+    }
     //swap items[iEnd], items[iPivot]
-    if(iPivot == iEnd) return -1; //avoid infinite loop with duplicate items
     swap = items[iEnd];
     items[iEnd] = items[iPivot];
     items[iPivot] = swap;
     return iPivot;
 }
 
-void quicksort(const void **items, int iStart, int iEnd, CompareFunc compare) {
+void quicksort_(const void **items, int iStart, int iEnd, CompareFunc compare,
+int depth) {
+    //hacks to prevent infinite loops with empty lists
+    if(depth > 256) return;
+    if(hackCount >= 16384) return;
     if(iStart < iEnd) {
         int iPivot = partition(items, iStart, iEnd, compare);
-        if(iPivot < 0) return; //avoid infinite loop
-        quicksort(items, iStart,     iPivot - 1, compare);
-        quicksort(items, iPivot + 1, iEnd,       compare);
+        quicksort_(items, iStart,     iPivot - 1, compare, depth+1);
+        quicksort_(items, iPivot + 1, iEnd,       compare, depth+1);
     }
+}
+
+void quicksort(const void **items, int iStart, int iEnd, CompareFunc compare) {
+    hackCount = 0;
+    quicksort_(items, iStart, iEnd, compare, 0);
 }

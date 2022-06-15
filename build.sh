@@ -4,6 +4,7 @@
 DISCROOT=/home/rena/projects/sfa/files
 ORIGISO=~/projects/sfa/original.iso
 PATCHISO=~/projects/sfa/patched.iso
-mv amethyst.arg $DISCROOT
+[ -f amethyst.arg ] && mv amethyst.arg $DISCROOT
 DISCROOT=$DISCROOT ORIGISO=$ORIGISO PATCHISO=$PATCHISO make $*
-rm $DISCROOT/amethyst.arg
+[ -f $DISCROOT/amethyst.arg ] && rm $DISCROOT/amethyst.arg
+exit 0 # wtf

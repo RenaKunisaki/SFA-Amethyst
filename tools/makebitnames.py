@@ -17,6 +17,9 @@ for bit in gameBits.findall('./bit'):
         print("WARNING: Duplicate GameBit name: '" + str(name) + "'")
     seenName.add(name)
     names[id] = name
+if len(seenName) == 0:
+    sys.stderr.write("No gamebits found. Try removing xmlns attribute from gamebits.xml\n")
+    sys.exit(1)
 
 with open(sys.argv[2], 'wb') as outFile:
     for i in range(MAX_ID+1):

@@ -6,6 +6,7 @@ VERSION ?= u0
 
 #DISCROOT ?= /home/rena/projects/sfa/files
 DISCROOT ?= ./discroot/files
+DEVKITPRO ?= /opt/devkitpro
 
 TOOL=${DEVKITPRO}/devkitPPC/bin/powerpc-eabi-
 SRCDIR ?= .

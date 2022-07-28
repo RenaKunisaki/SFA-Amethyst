@@ -316,7 +316,19 @@ void* allocTaggedHook(u32 size, AllocTag tag, const char *name) {
     return NULL;
 }
 
+//XXX move this
+uint loadTextureFileHook(Texture **buf, int fileId) {
+    uint size = loadTextureFile(buf, fileId);
+    if(!*buf) {
+        DPRINT("Failed to load texture %d\n", fileId);
+        *buf = textureLoad(0, 0); //default texture
+        if(*buf) size = (*buf)->size;
+    }
+    return size;
+}
+
 void allocInit() {
     memset(freeablePtrs, 0, sizeof(void*) * MAX_FREEABLE_PTRS);
     hookBranch((u32)allocTagged, allocTaggedHook, 0);
+    hookBranch((u32)0x80054d94,  loadTextureFileHook, 1);
 }

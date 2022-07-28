@@ -52,6 +52,15 @@ static const u8 objEmergFreeCats[] = {
     0xFF, //end of list
 };
 
+void _printTrace() {
+    OSReport("Trace: %08X < %08X < %08X < %08X < %08X\n",
+        __builtin_return_address(1), //0 = this function
+        __builtin_return_address(2),
+        __builtin_return_address(2),
+        __builtin_return_address(4),
+        __builtin_return_address(5));
+}
+
 void getFreeMemory(u32 *outTotalBlocks, u32 *outTotalBytes,
 u32 *outUsedBlocks, u32 *outUsedBytes, int *outBlocksPct, int *outBytesPct) {
     u32 totalBlocks=0, totalBytes=0, usedBlocks=0, usedBytes=0;
@@ -211,7 +220,13 @@ void* allocTaggedHook(u32 size, AllocTag tag, const char *name) {
     //DPRINT("alloc size=%8X tag=%08X lr=%08X name=%s", size, tag, lr, name);
 
     //mostly copied game code
-    if (size == 0) return NULL;
+    if(size == 0) return NULL;
+    if(size >= 24*1024*1024) {
+        OSReport("BOGUS ALLOC SIZE 0x%08X lr=0x%08X tag=0x%08X\n",
+            size, lr, tag);
+        _printTrace();
+        return NULL;
+    }
 
     int count = 0;
     void *buf = NULL;
@@ -272,12 +287,7 @@ void* allocTaggedHook(u32 size, AllocTag tag, const char *name) {
                     NULL, NULL);
                 OSReport("Out of memory! size=0x%X tag=0x%X Free blocks %d Kbytes %d - initiating emergency free",
                     size, tag, totalBlocks - usedBlocks, (totalBytes - usedBytes)/1024);
-                OSReport("Trace: %08X < %08X < %08X < %08X < %08X\n",
-                    __builtin_return_address(0),
-                    __builtin_return_address(1),
-                    __builtin_return_address(2),
-                    __builtin_return_address(3),
-                    __builtin_return_address(4));
+                _printTrace();
                 OSReport("force heaps 1/2=%d 3=%d\n", bOnlyUseHeaps1and2, bOnlyUseHeap3);
                 for(int i=0; i<NUM_HEAPS; i++) {
                     OSReport("Heap %d free Blocks %5d/%5d KBytes %5d/%5d\n", i,

@@ -53,12 +53,19 @@ static const u8 objEmergFreeCats[] = {
 };
 
 void _printTrace() {
-    OSReport("Trace: %08X < %08X < %08X < %08X < %08X\n",
+    //params have to be constant here
+    OSReport("Trace: %08X < %08X < %08X < %08X < %08X",
         __builtin_return_address(1), //0 = this function
         __builtin_return_address(2),
         __builtin_return_address(2),
         __builtin_return_address(4),
         __builtin_return_address(5));
+    OSReport(" < %08X < %08X < %08X < %08X < %08X\n",
+        __builtin_return_address(6),
+        __builtin_return_address(7),
+        __builtin_return_address(8),
+        __builtin_return_address(9),
+        __builtin_return_address(10));
 }
 
 void getFreeMemory(u32 *outTotalBlocks, u32 *outTotalBytes,
@@ -317,18 +324,26 @@ void* allocTaggedHook(u32 size, AllocTag tag, const char *name) {
 }
 
 //XXX move this
-uint loadTextureFileHook(Texture **buf, int fileId) {
-    uint size = loadTextureFile(buf, fileId);
-    if(!*buf) {
-        DPRINT("Failed to load texture %d\n", fileId);
-        *buf = textureLoad(0, 0); //default texture
-        if(*buf) size = (*buf)->size;
+Texture* textureLoadHook(int id, int bJustCheckIfLoaded) {
+    DPRINT("textureLoad(0x%04X, %d)\n",
+        id < 0 ? -id : id, bJustCheckIfLoaded);
+    Texture* result = textureLoad(id, bJustCheckIfLoaded);
+    if(bJustCheckIfLoaded) return result;
+    if(!PTR_VALID(result)) {
+        DPRINT("Failed to load texture %d (result %d)\n",
+            id, result);
+        return textureLoad(0, 0); //default texture
     }
-    return size;
+    return result;
 }
 
 void allocInit() {
     memset(freeablePtrs, 0, sizeof(void*) * MAX_FREEABLE_PTRS);
     hookBranch((u32)allocTagged, allocTaggedHook, 0);
-    hookBranch((u32)0x80054d94,  loadTextureFileHook, 1);
+    hookBranch((u32)0x8001f5f4,  textureLoadHook, 1);
+    hookBranch((u32)0x80029608,  textureLoadHook, 1);
+    hookBranch((u32)0x80056f00,  textureLoadHook, 1);
+    hookBranch((u32)0x80062938,  textureLoadHook, 1);
+    hookBranch((u32)0x8016f118,  textureLoadHook, 1);
+    hookBranch((u32)0x802bc0b4,  textureLoadHook, 1);
 }

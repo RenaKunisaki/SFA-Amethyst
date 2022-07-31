@@ -141,6 +141,7 @@ GLOBALFN void* loadFileByPath(char *path,uint *outSize);
 GLOBALFN ObjectFileStruct* loadObjectFile(int id);
 GLOBALFN void loadMapForCurrentSaveGame(void);
 GLOBALFN void loadSaveSettings(void);
+GLOBALFN uint loadTextureFile(Texture **buf, int fileId);
 GLOBALFN DLL* loadUiDll(int idx); //idx is not a DLL ID
 GLOBALFN u32 mainGetBit(GameBit bit);
 GLOBALFN void mainLoopAudioUpdate(void);
@@ -255,6 +256,8 @@ GLOBALFN void textRenderSetupFn_800795e8(void);
 GLOBALFN void textRenderSetupFn_80079804(void);
 GLOBALFN void textureFn_8004c264(Texture * texture, int texIdx);
 GLOBALFN Texture* textureIdxToPtr(int);
+GLOBALFN Texture* textureLoad(int id, u8 justCheckIfLoaded);
+GLOBALFN Texture* textureLoadAsset(int fileId);
 GLOBALFN void textureSetupFn_800799c0(void);
 GLOBALFN int titleLoadSaveFiles(void);
 GLOBALFN void timeListDraw(void);

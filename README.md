@@ -2,6 +2,7 @@ This is the source code for the Star Fox Adventures: Amethyst Edition mod.
 
 # Requirements
 - python3
+    - PIL or Pillow
 - devkitpro for GameCube
 - the Star Fox Adventures v1.0 USA ISO
     - it should have the MD5 checksum `afb0306454b581e37a62170fdfd1de09`

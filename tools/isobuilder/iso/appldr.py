@@ -1,4 +1,5 @@
 import struct
+from typing import Union
 from .binaryfile import BinaryFile
 from .isofile import IsoFile
 
@@ -18,7 +19,8 @@ class Appldr(IsoFile):
             self.readFile(file, offset)
 
 
-    def readFile(self, file:(str,BinaryFile)="apploader.img", offset:int=0):
+    def readFile(self, file:Union[str,BinaryFile]="apploader.img",
+    offset:int=0):
         """Read apploader.img file."""
         if type(file) is str:
             file = BinaryFile(file, 'rb', offset=offset)

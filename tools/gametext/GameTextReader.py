@@ -1,4 +1,5 @@
 from __future__ import annotations
+from typing import Union
 import struct
 import enum
 import io
@@ -11,7 +12,7 @@ from .FontTexture import FontTexture
 
 class GameTextReader:
     """Represents the contents of a .bin file under gametext directory."""
-    def __init__(self, file:(str,io.FileIO)=None):
+    def __init__(self, file:Union[str,io.FileIO]=None):
         self.chars    = [] # CharacterStruct
         self.texts    = [] # GameTextStruct
         self.strings  = {} # offset:int => string:str
@@ -85,7 +86,7 @@ class GameTextReader:
                 offs = self.strOffsets[idx+i]
                 text.phrases.append(self.strings[offs])
 
-    def read(self, file:(str,io.FileIO)) -> None:
+    def read(self, file:Union[str,io.FileIO]) -> None:
         """Read from file."""
         if type(file) is str: file = open(file, 'rb')
         self._readCharStructs(file)

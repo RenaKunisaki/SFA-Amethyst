@@ -1,3 +1,4 @@
+from typing import Union
 import os
 from .binaryfile import BinaryFile
 
@@ -40,7 +41,8 @@ class IsoFile:
         return (self.parent == file) or (self.parent is not None and self.parent.isDescendantOf(file))
 
 
-    def replaceWith(self, file:(str,BinaryFile), offset:int=0, size:int=None):
+    def replaceWith(self, file:Union[str,BinaryFile],
+    offset:int=0, size:int=None):
         """Replace this file with one from the local disk.
 
         file:   file to replace with.
@@ -59,7 +61,8 @@ class IsoFile:
         self.size = size
 
 
-    def writeToFile(self, file:(str,BinaryFile), chunkSize:int=4096):
+    def writeToFile(self, file:Union[str,BinaryFile],
+    chunkSize:int=4096):
         """Write this file's content to disk."""
         if self.isDir: raise IsADirectoryError(self)
         if not self.file:

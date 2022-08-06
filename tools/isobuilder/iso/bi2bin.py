@@ -1,4 +1,5 @@
 import struct
+from typing import Union
 from .binaryfile import BinaryFile
 from .isofile import IsoFile
 
@@ -35,7 +36,8 @@ class Bi2Bin(IsoFile):
             self.readFile(file, offset)
 
 
-    def readFile(self, file:(str,BinaryFile)="bi2.bin", offset:int=0):
+    def readFile(self, file:Union[str,BinaryFile]="bi2.bin",
+    offset:int=0):
         """Read bi2.bin file."""
         if type(file) is str:
             file = BinaryFile(file, 'rb', offset=offset)

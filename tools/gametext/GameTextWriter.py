@@ -1,4 +1,5 @@
 from __future__ import annotations
+from typing import Union
 import struct
 import enum
 import os
@@ -44,7 +45,8 @@ class GameTextWriter:
         self._haveChars = set() # (fontNo, character)
         self._haveTexts = set() # phrase texts concated
 
-    def addFont(self, font:(Image, io.FileIO, str, FontTexture)) -> None:
+    def addFont(self,
+    font:Union[Image.Image, io.FileIO, str, FontTexture]) -> None:
         """Add a font texture."""
         if type(font) is not FontTexture:
             if type(font) is not Image:
@@ -216,7 +218,7 @@ class GameTextWriter:
         #printf("Write EOF at 0x%X\n", file.tell())
         file.write(b'\0' * 8)
 
-    def write(self, file:(str,io.FileIO)) -> None:
+    def write(self, file:Union[str,io.FileIO]) -> None:
         """Create new file."""
         if type(file) is str: file = open(file, 'wb')
         self.strDataLen = self._buildStringTable()

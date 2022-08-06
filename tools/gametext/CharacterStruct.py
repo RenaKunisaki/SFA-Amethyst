@@ -1,4 +1,5 @@
 from __future__ import annotations
+from typing import Union
 from .util import printf, readStruct, writeStruct
 import struct
 import io
@@ -7,7 +8,7 @@ import xml.etree.ElementTree as ET
 class CharacterStruct:
     """Identifies the location of one character in the font textures."""
     def __init__(self,
-    character :(int,str) = None, #unicode number
+    character :Union[int,str] = None, #unicode number
     xpos      :int = None, #coordinate of leftmost texel in font bitmap
     ypos      :int = None, #coordinate of topmost texel in font bitmap
     left      :int = None, #spacing

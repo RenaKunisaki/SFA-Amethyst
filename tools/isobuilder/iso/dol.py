@@ -1,4 +1,5 @@
 import struct
+from typing import Union
 from .binaryfile import BinaryFile
 from .isofile import IsoFile
 
@@ -17,7 +18,7 @@ class DOL(IsoFile):
             self.readFile(file, offset)
 
 
-    def readFile(self, file:(str,BinaryFile), offset:int=0):
+    def readFile(self, file:Union[str,BinaryFile], offset:int=0):
         """Read DOL file."""
         if type(file) is str:
             file = BinaryFile(file, 'rb', offset=offset)

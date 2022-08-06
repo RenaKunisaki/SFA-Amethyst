@@ -1,4 +1,5 @@
 import struct
+from typing import Union
 from .binaryfile import BinaryFile
 from .isofile import IsoFile
 from PIL import Image
@@ -49,7 +50,8 @@ def encode5A3(r, g, b, a):
 class OpeningBnr(IsoFile):
     """opening.bnr file"""
 
-    def __init__(self, offset:int=0, file:(str,BinaryFile)=None):
+    def __init__(self, offset:int=0,
+    file:Union[str,BinaryFile]=None):
         super().__init__("bi2.bin", isDir=False, offset=offset,
             size=OPENING_BNR_SIZE, file=file, fileOffs=offset)
 
@@ -65,7 +67,8 @@ class OpeningBnr(IsoFile):
         if file is not None:
             self.readFile(file, offset)
 
-    def readFile(self, file:(str,BinaryFile)="boot.bin", offset:int=0):
+    def readFile(self, file:Union[str,BinaryFile]="boot.bin",
+    offset:int=0):
         """Read boot.bin file."""
         if type(file) is str:
             file = BinaryFile(file, 'rb', offset=offset)
@@ -82,7 +85,8 @@ class OpeningBnr(IsoFile):
         if self.magic not in (BNR_MAGIC1, BNR_MAGIC2):
             raise ValueError("Incorrect/corrupt opening.bnr file")
 
-    def writeToFile(self, file:(str,BinaryFile), chunkSize:int=4096):
+    def writeToFile(self, file:Union[str,BinaryFile],
+    chunkSize:int=4096):
         """Write this file's content to disk."""
         if type(file) is str: file = BinaryFile(file, 'wb')
         file.writeu32(self.magic)
@@ -121,7 +125,7 @@ class OpeningBnr(IsoFile):
         return Image.frombytes('RGBA', (BNR_WIDTH, BNR_HEIGHT), bytes(data), 'raw',
             'RGBA', 0, 1)
 
-    def fromImage(self, img:(Image,str)):
+    def fromImage(self, img:Union[Image.Image,str]):
         """Replace banner graphic from image object."""
         data = bytearray(BNR_WIDTH * BNR_HEIGHT * 2)
         if type(img) is str: img = Image.open(img)

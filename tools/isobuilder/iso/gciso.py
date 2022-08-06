@@ -1,4 +1,5 @@
 import struct
+from typing import Union
 import os
 import os.path
 from .binaryfile import BinaryFile
@@ -228,7 +229,8 @@ class GCISO(ISO):
         print('')
 
 
-    def writeToFile(self, file:(str,BinaryFile), chunkSize:int=4096):
+    def writeToFile(self, file:Union[str,BinaryFile],
+    chunkSize:int=4096):
         """Write ISO to disk."""
         if type(file) is str: file = BinaryFile(file, 'wb')
 

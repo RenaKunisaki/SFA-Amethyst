@@ -1,4 +1,5 @@
 from __future__ import annotations
+from typing import Union
 import struct
 import enum
 import io
@@ -177,7 +178,7 @@ class GameString:
         res += bytes(chr(cmdId), 'utf-8') + struct.pack('>%dH' % len(paramData), *paramData)
         return res, end
 
-    def _parseEscape(self, string:str) -> (str,int):
+    def _parseEscape(self, string:str) -> Union[str,int]:
         # expects string to be the substring following the backslash
         c = string[0]
         if c in GameString.escapeChars: return GameString.escapeChars[c], 1

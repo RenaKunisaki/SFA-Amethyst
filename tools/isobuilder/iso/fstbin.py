@@ -1,4 +1,5 @@
 import struct
+from typing import Union
 from .binaryfile import BinaryFile
 from .isofile import IsoFile
 
@@ -20,7 +21,8 @@ class FstBin(IsoFile):
             self.build()
 
 
-    def readFile(self, file:(str,BinaryFile)="fst.bin", offset:int=0):
+    def readFile(self, file:Union[str,BinaryFile]="fst.bin",
+    offset:int=0):
         """Read fst.bin file."""
         #print("Read FST from %s 0x%X" % (path, offset))
 
@@ -155,7 +157,8 @@ class FstBin(IsoFile):
             self._entries.append(entry)
 
 
-    def writeToFile(self, file:(str,BinaryFile), chunkSize:int=4096):
+    def writeToFile(self, file:Union[str,BinaryFile],
+    chunkSize:int=4096):
         """Write this file's content to disk."""
         if type(file) is str: file = BinaryFile(file, 'wb')
 

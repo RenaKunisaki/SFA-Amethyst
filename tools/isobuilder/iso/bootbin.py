@@ -1,4 +1,5 @@
 import struct
+from typing import Union
 from .binaryfile import BinaryFile
 from .isofile import IsoFile
 
@@ -34,7 +35,7 @@ class BootBin(IsoFile):
             self.readFile(file, offset)
 
 
-    def readFile(self, file:(str,BinaryFile)="boot.bin", offset:int=0):
+    def readFile(self, file:Union[str,BinaryFile]="boot.bin", offset:int=0):
         """Read boot.bin file."""
         if type(file) is str:
             file = BinaryFile(file, 'rb', offset=offset)
@@ -66,7 +67,8 @@ class BootBin(IsoFile):
         return self
 
 
-    def writeToFile(self, file:(str,BinaryFile), chunkSize:int=4096):
+    def writeToFile(self, file:Union[str,BinaryFile],
+    chunkSize:int=4096):
         """Write this file's content to disk."""
         if type(file) is str: file = BinaryFile(file, 'wb')
         file.writeString(self.gameCode, length=4)

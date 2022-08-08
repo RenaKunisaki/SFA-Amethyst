@@ -332,17 +332,23 @@ static void printPlayerObj(const char *name, ObjInstance *obj) {
     if(!(PTR_VALID(obj) && PTR_VALID(obj->file))) return;
     debugPrintf("%s " DPRINT_FIXED "%08X ", name, obj);
     printObjName("%s", obj);
+
     char buf[256];
     sprintf(buf, "%08X %+7.2f %+7.2f %+7.2f", obj->objDef->id,
         obj->pos.pos.x, obj->pos.pos.y, obj->pos.pos.z);
-    debugPrintf(" %s" DPRINT_NOFIXED "\n", buf);
+    debugPrintf(" %s" DPRINT_NOFIXED, buf);
+
+    sprintf(buf, "; DLL:" DPRINT_FIXED "%08X\n", obj->dll);
+    debugPrintf("%s", buf);
 }
 
 static void printPlayerState() {
+    ObjInstance *player = getArwing();
+    if(!player) player = pPlayer;
     debugPrintf("Player=%08X: ", pPlayer);
     printObjName("%s\n", pPlayer);
     if(!(pPlayer && pPlayer->file)) return;
-    if(pPlayer->catId != ObjCatId_Player) return; //don't apply to title screen Fox
+    if(pPlayer->catId != ObjCatId_Player) return; //don't apply to title screen Fox, Arwing
 
     void *pState = pPlayer ? pPlayer->state : NULL;
     if(!pState) return;

@@ -345,12 +345,12 @@ static void printPlayerObj(const char *name, ObjInstance *obj) {
 static void printPlayerState() {
     ObjInstance *player = getArwing();
     if(!player) player = pPlayer;
-    debugPrintf("Player=%08X: ", pPlayer);
-    printObjName("%s\n", pPlayer);
-    if(!(pPlayer && pPlayer->file)) return;
-    if(pPlayer->catId != ObjCatId_Player) return; //don't apply to title screen Fox, Arwing
+    debugPrintf("Player=%08X: ", player);
+    printObjName("%s\n", player);
+    if(!(player && player->file)) return;
+    if(player->catId != ObjCatId_Player) return; //don't apply to title screen Fox, Arwing
 
-    void *pState = pPlayer ? pPlayer->state : NULL;
+    void *pState = player ? player->state : NULL;
     if(!pState) return;
     PlayerCharState *cState = *(PlayerCharState**)(pState + 0x35C);
 

@@ -143,14 +143,14 @@ void genericMenu_run(Menu *self) {
             ? MENU_INPUT_DELAY_ADJUST : MENU_INPUT_DELAY_ADJUST_FAST;
         self->items[sel].select(&self->items[sel], -1);
     }
-    /* else if(controllerStates[0].triggerLeft > 40) { //L
-        menuInputDelayTimer = 0;
-        curMenu->items[sel].select(&curMenu->items[sel], -1);
+    else if(controllerStates[0].triggerLeft > 40) { //L
+        menuInputDelayTimer = MENU_INPUT_DELAY_ADJUST;
+        curMenu->items[sel].select(&curMenu->items[sel], -0x80);
     }
     else if(controllerStates[0].triggerRight > 40) { //R
-        menuInputDelayTimer = 0;
-        curMenu->items[sel].select(&curMenu->items[sel], 1);
-    } */
+        menuInputDelayTimer = MENU_INPUT_DELAY_ADJUST;
+        curMenu->items[sel].select(&curMenu->items[sel], 0x80);
+    }
 }
 
 void menuDrawText(const char *str, int x, int y, bool selected) {

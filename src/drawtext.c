@@ -112,7 +112,7 @@ Color4b color, float scale) {
     _gxSetTexColorEnv0(0,0,0,0,1,0);
     _gxSetTexColorEnv1(0,0,0,0,1,0);
 
-    if (texture->unk50 == 0) {
+    if (texture->tevVal50 == 0) {
         gxTextureFn_8025c2a0(1);
     }
     else {

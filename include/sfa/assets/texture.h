@@ -36,72 +36,55 @@ typedef enum { //type:u8
     TextureFormat_BC1    = 0xE,
 } TextureFormat;
 
-typedef struct PACKED TextureGpuStruct2 {
-	uint SetImage1;
-	uint SetImage2;
-} TextureGpuStruct2;
-
-typedef struct PACKED TextureGpuStruct {
-	dword              SetMode0;  //0x00
-	dword              SetMode1;  //0x04
-	dword              SetImage0; //0x08
-	dword              SetImage3; //0x0C
-	TextureHeader     *texture;   //0x10
-    u32                unk14;     //0x14
-	dword              unk18;     //0x18
-	ushort             blockSize; //0x1C
-	byte               pixelFmt;  //0x1E
-	byte               flags;     //0x1F
-	TextureGpuStruct2 *unk20;     //0x20
-	uint               dataSize;  //0x24
-} TextureGpuStruct;
-CASSERT(sizeof(TextureGpuStruct) == 0x28, sizeof_TextureGpuStruct);
-
-typedef struct PACKED TextureHeader {
-	word            *unk00;  //0x00
-	ObjInstance     *obj;    //0x04
-    u32              unk08;  //0x08
-	byte             red;    //0x0C much of this is wrong
-    u8               unk0D;  //0x0D
-	byte             green;  //0x0E
-    u8               unk0F;  //0x0F
-	dword            unk10;  //0x10
-    u32              unk14;  //0x14
-	byte             red2;   //0x18
-	byte             green2; //0x19
-	byte             unk1A;  //0x1A
-	byte             unk1B;  //0x1B
-	undefined       *unk1C;  //0x1C
-	TextureGpuStruct gpu;    //0x20
-} TextureHeader;
-CASSERT(sizeof(TextureHeader) == 0x48, sizeof_TextureHeader);
+//SDK includes a definition of this struct but it's opaque
+typedef struct PACKED {
+	u32   mode0;    //00
+	u32   mode1;    //04
+	u32   image0;   //08
+	u32   image3;   //0C
+	void* userData; //10 game stores the Texture* here
+    u32   format;   //14 GXTexFmt
+	u32   tlutName; //18
+	u16   loadCnt;  //1C
+	u8    loadFmt;  //1E 0=CMPR 1=4bpp 2=8bpp 3=32bpp
+	u8    flags;    //1F 1=mipmap 2=isRGB
+} GXTexObj_real;
+CASSERT(sizeof(GXTexObj_real) == 0x20, sizeof_GXTexObj_real);
 
 typedef struct PACKED Texture {
-	Texture         *next;     //0x00
-	uint             flags;    //0x04
-	short            xOffset;  //0x08
-	ushort           width;    //0x0A
-	ushort           height;   //0x0C
-	short            refCount; //0x0E
-	short            unk10;    //0x10
-    short            unk12;    //0x12
-	ushort           unk14;    //0x14
-	u8               format;   //0x16 TextureFormat
-	Color4b          unk17;    //0x17 XXX this can't be right
-    byte             unk1B;    //0x1B
-	byte             unk1C;    //0x1C
-	byte             unk1D;    //0x1D
-	byte             unk1E;    //0x1E
-	byte             unk1F;    //0x1F
-	TextureGpuStruct gpu;      //0x20
-	byte             unk48;    //0x48
-	byte             unk49;    //0x49
-	byte             unk4A;    //0x4A
-	byte             unk4B;    //0x4B
-	uint             size;     //0x4C
-	dword            unk50;    //0x50
+	//^ denotes fields that are always 0 in the files on disc
+	Texture*      next;                 //^00
+	u32           flags;                //^04
+	s16           xOffset;              //^08
+	u16           width;                // 0A
+	u16           height;               // 0C
+	s16           usage;                // 0E ref count
+	s16           frameVal10;           // 10 related to anim frame count
+	s16           unk12;                //^12 always 0, never accessed?
+	u16           framesPerTick;        // 14 how many frames to advance each tick
+	u8            format;               // 16 GXTexFmt
+	u8            wrapS;                // 17 GXTexWrapMode
+	u8            wrapT;                // 18 GXTexWrapMode
+	u8            minFilter;            // 19 FilterMode
+	u8            magFilter;            // 1A FilterMode
+	u8            _padding1B;           //^1B always 0, never accessed (odd place for padding; maybe unused field)
+	u8            minLod;               // 1C (bias hardcoded to -2)
+	u8            maxLod;               // 1D
+	u8            unk1E;                // 1E padding? never accessed, but some files have 0xFF
+	u8            _padding1F;           //^1F padding
+	GXTexObj_real texObj;               //^20 all zero in file
+	GXTexRegion*  texRegion;            //^40
+	s32           bufSize;              //^44 raw image data size
+	bool          bNoTexRegionCallback; // ^48 bool use gxSetTexImage0 instead of gxCallTexRegionCallback
+	bool          bDoNotFree;           // ^49 bool (maybe memory region?)
+	s8            unk4A;                // ^4A never accessed
+	s8            unk4B;                // ^4B set to 10 on free, otherwise never acccessed (memory region?)
+	u32           bufSize2;             //^4C same as bufSize (allocated size?)
+	u32           tevVal50;             // 50 0:use 1 TEV stage, not 2 (maybe bHasTwoTevStages?)
+	u32           _padding54[3];        //^54
+	u8            data[0];              // 60 variable size
 } Texture;
-CASSERT(sizeof(Texture) == 0x54, sizeof_Texture);
+CASSERT(sizeof(Texture) == 0x60, sizeof_Texture);
 
 typedef struct LoadedTexture {
 	int        id;       //0x0

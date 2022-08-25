@@ -4,14 +4,27 @@
 #define TEXTURE_MENU_XPOS      15
 #define TEXTURE_MENU_YPOS      40
 #define TEXTURE_MENU_WIDTH    620
-#define TEXTURE_MENU_HEIGHT    60
+#define TEXTURE_MENU_HEIGHT   110
 #define TEXTURE_IMAGE_XPOS     15
-#define TEXTURE_IMAGE_YPOS    105
+#define TEXTURE_IMAGE_YPOS    145
 #define TEXTURE_IMAGE_PADDING   7
 
 static s8 textureMenuFrame = 0;
 static bool textureMenuAnimate = false;
 static u8 textureMenuAnimTimer = 0;
+
+static const char *wrapModeNames[] = {
+    "CLAMP ", "REPEAT", "MIRROR"
+};
+static const char *filterModeNames[] = {
+    "NEAREST      ", "LINEAR      ",
+    "NEAR_MIP_NEAR", "LIN_MIP_NEAR",
+    "NEAR_MIP_LIN ", "LIN_MIP_LIN "
+};
+static const char *formatNames[] = {
+    "I4", "I8", "IA4", "IA8", "RGB565", "RGB5A3", "RGBA8",
+    "", "C4", "C8", "C14X2", "", "", "", "CMPR"
+};
 
 void textureMenu_draw(Menu *self) {
     //Draw function for Texture Viewer menu
@@ -34,17 +47,43 @@ void textureMenu_draw(Menu *self) {
     int id = ltex->id;
     char sign = (id < 0) ? '-' : ' ';
     if(id < 0) id = -id;
-    sprintf(str, "Tex \eF%04X.%02X\eF: ID \eF%c%04X\eF Unk \eF%02X @%08X\eF",
+
+    /* #00AD Frame 00 ID -0725 @80FF0C60 RC:  1
+       Fmt: RGB565        Size 512x256
+       Min: NEAR_MIP_NEAR Mag: NEAR_MIP_NEAR
+       WS:  REPEAT        WT:  REPEAT
+       10:  0100   1E:00  50:0 */
+
+    sprintf(str, "\eF#%04X Frame %02X ID %c%04X @%08X RC:%3d\eF",
         self->selected, textureMenuFrame, sign,
-        id & 0x7FFF, ltex->unk08, tex);
+        id & 0x7FFF, tex, tex->usage);
     menuDrawText(str, x, y, false);
-    y += LINE_HEIGHT;
+    y += LINE_HEIGHT+2;
 
     if(tex) {
-        sprintf(str, "Flags: \eF%08X\eF RefCnt: \eF%3d\eF Fmt: \eF%02X; %d x %d\eF",
-            tex->flags, tex->refCount, tex->format, tex->width, tex->height);
+        sprintf(str, "\eFFmt: %-13s Size %3dx%3d\eF",
+            tex->format < 0xF ? formatNames[tex->format] : "",
+            tex->width, tex->height);
         menuDrawText(str, x, y, false);
-        y += LINE_HEIGHT;
+        y += LINE_HEIGHT+2;
+
+        sprintf(str, "\eFMin: %-13s Mag: %-13s\eF",
+            tex->minFilter < 6 ? filterModeNames[tex->minFilter] : "",
+            tex->magFilter < 6 ? filterModeNames[tex->magFilter] : "");
+        menuDrawText(str, x, y, false);
+        y += LINE_HEIGHT+2;
+
+        //space out WS, WT so the W doesn't overlap
+        sprintf(str, "\eFW S: %-13s W T: %-13s\eF",
+            tex->wrapS < 3 ? wrapModeNames[tex->wrapS] : "",
+            tex->wrapT < 3 ? wrapModeNames[tex->wrapT] : "");
+        menuDrawText(str, x, y, false);
+        y += LINE_HEIGHT+2;
+
+        sprintf(str, "\eF10:  %04X   1E:%02X  50:%X\eF",
+            tex->frameVal10, tex->unk1E, tex->tevVal50);
+        menuDrawText(str, x, y, false);
+        y += LINE_HEIGHT+2;
 
         //get frame
         if(textureMenuAnimate) {

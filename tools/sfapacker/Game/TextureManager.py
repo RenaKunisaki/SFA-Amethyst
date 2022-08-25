@@ -26,70 +26,24 @@ class TextureManager:
         self.game = game
 
 
-    # XXX maybe not useful
-    def _readTexTable(self, force=False) -> None:
-        """Read the index lookup table."""
-        if (self.texTable is not None) and (not force): return
-        self.texTable, self.texTableInv = [], {}
-        path = os.path.join(self.game.rootDir, 'TEXTABLE.bin')
-        with BinaryFile(path, 'rb') as file:
-            while file.tell() + 2 <= file.size:
-                entry = file.readu16() # texture index
-                idx = entry
-                #if idx < 3000 or len(self.texTable) == 0: idx += 1
-                if idx != 0 and idx != 0xFFFF:
-                    self.texTableInv[idx] = len(self.texTable)
-                self.texTable.append(entry)
-        #print("TEX TABLE", list(map(lambda it: '%04X=%04X'%it, enumerate(self.texTable))))
-        #print("INV TABLE", list(map(lambda it: '%04X=%04X'%it, self.texTableInv.items())))
-
-
-    def texIdToIndex(self, tId:int) -> int:
-        """Convert a texture ID to a texture index."""
-        if tId < 0: # the game uses negative IDs to bypass translation
-            return -tId
-        elif tId >= 0x8000:
-            # negative 16-bit or 32-bit texture IDs that may get
-            # incorrectly interpreted as large IDs
-            return tId & 0x7FFF
-        else:
-            self._readTexTable()
-            try:
-                res = self.texTable[tId]
-                if res == 0xFFFF: return None # deleted ID
-                if tId < 3000 or res == 0: res += 1 # game does this
-                return res
-            except IndexError: # invalid ID
-                return None
-
-
     def getTexturesInMap(self, mapDir:str) -> dict[int, bool]:
         """Build a map of which textures are present
         in the given map directory."""
-        self._readTexTable()
-
         result = {}
         fTab0  = self.game.openMapFile(mapDir, 'TEX0.tab')
         fTab1  = self.game.openMapFile(mapDir, 'TEX1.tab')
-
-        for tId, idx in enumerate(self.texTable):
-            if tId < 3000 or idx == 0: idx += 1 # game does this
-            # most deleted texture IDs refer to ID 0 (which becomes
-            # 1 because of the check above) which is the placeholder
-            # texture. Some refer to -1 which gives the same.
-            if idx == 0xFFFF or idx == 1: continue
-
-            fTab0.seek(idx*4)
-            fTab1.seek(idx*4)
+        idx    = 0
+        while True:
             try: t0 = fTab0.readu32()
-            except struct.error: t0 = 0
+            except struct.error: t0 = None
             try: t1 = fTab1.readu32()
-            except struct.error: t1 = 0
+            except struct.error: t1 = None
+            if t0 is None and t1 is None: break # end of both
+
             if (t0 & 0xC0000000) != 0 or (t1 & 0xC0000000) != 0:
-                result[tId] = True
-            else: result[tId] = False
-            print("tId %08X idx %08X T0 %08X T1 %08X" % (
-                tId, idx, t0, t1))
+                result[idx] = True
+            else: result[idx] = False
+            idx += 1
 
         return result
 
@@ -102,8 +56,6 @@ class TextureManager:
         :param which: Which texture file to unpack (0 or 1)
         :return: list of textures.
         """
-        self._readTexTable()
-
         # open the files
         inPath = os.path.join(self.game.rootDir, mapDir,
             f'TEX{which}')
@@ -125,11 +77,10 @@ class TextureManager:
 
         :return: a list of textures.
         """
-        inPath = os.path.join(self.game.rootDir, 'TEXPRE')
+        inPath  = os.path.join(self.game.rootDir, 'TEXPRE')
         binFile = BinaryFile(inPath+'.bin', 'rb')
         tabFile = BinaryFile(inPath+'.tab', 'rb')
-
-        result = self._unpackTextureFile(binFile, tabFile, 2)
+        result  = self._unpackTextureFile(binFile, tabFile, 2)
         binFile.close()
         tabFile.close()
         return result
@@ -137,6 +88,13 @@ class TextureManager:
 
     def _unpackTextureFile(self, binFile:BinaryFile,
     tabFile:BinaryFile, which:int) -> list[Texture]:
+        """Unpack textures from given files.
+
+        :param binFile: Binary file to unpack from.
+        :param tabFile: Table file to unpack from.
+        :param which: Which texture file this is (0, 1, 2).
+        :return: list of textures.
+        """
         result: list[Texture] = [] # the textures
         idx = 0 # which entry index
         while True:
@@ -246,10 +204,9 @@ class TextureManager:
         for name in os.listdir(self.game.rootDir):
             path = os.path.join(self.game.rootDir, name)
             try:
-                tex0 = self.game.texMgr.unpackMapTextures(path, 0)
-                tex1 = self.game.texMgr.unpackMapTextures(path, 1)
-                textures = list(tex0.values()) + list(tex1.values())
-                for tex in textures:
+                tex0 = self.unpackMapTextures(path, 0)
+                tex1 = self.unpackMapTextures(path, 1)
+                for tex in tex0 + tex1:
                     for frame in tex.frames:
                         for name in fields.keys():
                             if name.startswith('TexObj_'):
@@ -266,8 +223,8 @@ class TextureManager:
             except (FileNotFoundError, NotADirectoryError):
                 pass
 
-        texPre = self.game.texMgr.unpackTexPre()
-        for tex in texPre.values():
+        texPre = self.unpackTexPre()
+        for tex in texPre:
             for frame in tex.frames:
                 for name in fields.keys():
                     if name.startswith('TexObj_'):

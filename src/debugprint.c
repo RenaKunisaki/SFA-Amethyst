@@ -132,11 +132,13 @@ static void printCoords() {
         levelLockBuckets[0] & 0xFF, levelLockBuckets[1] & 0xFF);
 
     //display velocity and angle
-    if(pPlayer) {
+    ObjInstance *player = getArwing();
+    if(!player) player = pPlayer;
+    if(player) {
         //not entirely sure what the velocity is relative to.
         //seems to be something involving both world and camera space.
         //in any case it's not that important since we only care about XZ distance.
-        vec3f vel = pPlayer->vel;
+        vec3f vel = player->vel;
         /* float fwdX, fwdZ, sideX, sideZ;
         angleToVec2(pCamera->pos.rotation.x,          &fwdX,  &fwdZ);
         angleToVec2(pCamera->pos.rotation.x + 0x4000, &sideX, &sideZ);
@@ -147,10 +149,10 @@ static void printCoords() {
         vec3f zero = {0, 0, 0};
         vel.z = vec3f_xzDistance(&vel, &zero);
 
-        s16 rxAdj = 0x8000 - pPlayer->pos.rotation.x; //for consistency with viewfinder
+        s16 rxAdj = 0x8000 - player->pos.rotation.x; //for consistency with viewfinder
         float rx = ((float)rxAdj)                   * (360.0 / 65536.0);
-        float ry = ((float)pPlayer->pos.rotation.y) * (360.0 / 65536.0);
-        float rz = ((float)pPlayer->pos.rotation.z) * (360.0 / 65536.0);
+        float ry = ((float)player->pos.rotation.y) * (360.0 / 65536.0);
+        float rz = ((float)player->pos.rotation.z) * (360.0 / 65536.0);
         if(rx < 0.0) rx += 360.0;
         if(ry < 0.0) ry += 360.0;
         if(rz < 0.0) rz += 360.0;
@@ -342,9 +344,28 @@ static void printPlayerObj(const char *name, ObjInstance *obj) {
     debugPrintf("%s", buf);
 }
 
+static void printArwingState(ObjInstance *arwing) {
+    void *state = arwing->state;
+    if(!PTR_VALID(state)) return;
+
+    char buf[256];
+    sprintf(buf, "Arwing[" DPRINT_FIXED "%08X" DPRINT_NOFIXED
+        "] HP=%d/%d BombCool:%1.0f GunCool:%1.0f BoostCool:%1.0f\n", state,
+        *(u8*)(state+0x468),
+        *(u8*)(state+0x469),
+        *(float*)(state+0x440),
+        *(float*)(state+0x408),
+        *(float*)(state+0xB4));
+    debugPrintf("%s", buf);
+}
+
 static void printPlayerState() {
     ObjInstance *player = getArwing();
-    if(!player) player = pPlayer;
+    if(player) {
+        printArwingState(player);
+        return;
+    }
+    player = pPlayer;
     debugPrintf("Player=%08X: ", player);
     printObjName("%s\n", player);
     if(!(player && player->file)) return;
@@ -630,6 +651,29 @@ void mainLoopDebugPrint() {
             debugPrintf("Obj" DPRINT_FIXED "%d %08X" DPRINT_NOFIXED " %s\n", i, obj, name);
         }
     } */
+
+    //temporary
+    #if 0
+    for(int iObj=0; iObj<numLoadedObjs; iObj++) {
+        ObjInstance *obj = loadedObjects[iObj];
+        if(!obj) continue;
+        if(obj->defNo == 0x76A) {
+            void *state = obj->state;
+            if(!state) continue;
+            ObjInstance *lHand = *(ObjInstance**)(state+0x4);
+            ObjInstance *rHand = *(ObjInstance**)(state+0x8);
+            ObjInstance *brain = *(ObjInstance**)(state+0xC);
+
+            debugPrintf("Andross[%08X] act=%02X flag=%02X %f LH:%02X RH:%02X B:%02X\n",
+                state, *(u32*)(state+0x88),
+                *(u8*)(state+0xAD),
+                *(float*)(state+0x9C),
+                (lHand && PTR_VALID(lHand->state)) ? *(u8*)(lHand->state + 0x23) : 0xFF,
+                (rHand && PTR_VALID(rHand->state)) ? *(u8*)(rHand->state + 0x23) : 0xFF,
+                (brain && PTR_VALID(brain->state)) ? *(u8*)(brain->state + 0x1C) : 0xFF);
+        }
+    }
+    #endif
 
     rngCalls = 0; //reset logging
     rngReseeds = 0;

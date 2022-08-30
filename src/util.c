@@ -217,3 +217,16 @@ Color4b hsv2rgb(u8 h, u8 s, u8 v, u8 a) {
     Color4b res = {.r = (r+m)*255, .g = (g+m)*255, .b = (b+m)*255, .a = a};
     return res;
 }
+
+/** Check if a DLL ID is valid.
+ *  @param id DLL ID.
+ *  @return true if valid, false if not.
+ */
+bool isDllValid(int id) {
+    if(id < 0 || id >= 706) return false;
+    DLL *dll = g_dlls[id];
+    if(!PTR_VALID(dll)) return false;
+    if(!(PTR_VALID(dll->initialise) || dll->initialise == NULL)) return false;
+    if(!(PTR_VALID(dll->release) || dll->release == NULL)) return false;
+    return true;
+}

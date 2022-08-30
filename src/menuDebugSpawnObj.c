@@ -63,7 +63,7 @@ void spawnList_draw(Menu *self) {
     gameTextSetColor(255, 255, 255, 255);
 
     int x = SPAWN_MENU_XPOS + MENU_PADDING, y = SPAWN_MENU_YPOS + MENU_PADDING;
-    int iObj    = MAX(0, self->selected - (SPAWN_MENU_NUM_LINES-2));
+    int iObj    = MAX(0, self->selected - (SPAWN_MENU_NUM_LINES-3));
     int nLines  = 0;
 
     if(!objIdList) {
@@ -71,6 +71,9 @@ void spawnList_draw(Menu *self) {
         return;
     }
 
+    menuDrawText("\eFDef# Real (DefNo Real#) DLL# Name", x, y, false);
+    y += LINE_HEIGHT;
+    nLines++;
     while(nLines < (SPAWN_MENU_NUM_LINES-1) && iObj < numItems) {
         char name[12];
         int defNo = objIdList[iObj];
@@ -78,8 +81,13 @@ void spawnList_draw(Menu *self) {
         ObjectFileStruct *file = getObjFile(defNo);
         if(!file) break;
         getObjFileName(name, file);
-        sprintf(str, "\eF%04X %04X (%5d %5d) %s", defNo & 0xFFFF, realId & 0xFFFF,
-            defNo & 0xFFFF, realId & 0xFFFF, name);
+        sprintf(str,
+            "\eF%04X %04X (%5d %5d) %04X %s%s",
+            defNo & 0xFFFF, realId & 0xFFFF,
+            defNo & 0xFFFF, realId & 0xFFFF,
+            file->dll_id & 0xFFFF, name,
+            (isDllValid(file->dll_id) || file->dll_id == -1) ?
+                "" : " (INVALID)");
 
         menuDrawText(str, x, y, iObj == self->selected);
         y += LINE_HEIGHT;

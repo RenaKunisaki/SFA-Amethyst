@@ -98,7 +98,7 @@ WarpMenuItem warps[] = {
 //  {  3200,   -127,  28160/2,  0}, //"Unused: Willow Grove",
     { 19373,     23,  30079/2,  0}, //"Unused: Old Krazoa Palace",
 //  {  3693,    -37,    238/2,  0}, //"Unused: Old Krazoa Palace", where did these coords come from?
-//  {-19200,   -127,  33920/2,  0}, //"Unused: CloudRunner Race 2",
+    {-14242,   1284,  34243/2,  0}, //"Unused: CloudRunner to Race", manually added to globalma.bin
     {-12768,  -2364,  12376/2, -1} //"Unused: Dragon Rock Bottom"
 };
 
@@ -205,7 +205,7 @@ const char *warpNames[] = {
 //    "\x8F" "Discovery Falls",
 //    "\x8F" "Willow Grove",
     "\x8F" "Old Krazoa Palace",
-//    "\x8F" "CloudRunner Race 2",
+    "\x8F" "CloudRunner to Race",
     "\x8F" "Dragon Rock Bottom",
     NULL
 };

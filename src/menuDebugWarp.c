@@ -98,7 +98,7 @@ WarpMenuItem warps[] = {
 //  {  3200,   -127,  28160/2,  0}, //"Unused: Willow Grove",
     { 19373,     23,  30079/2,  0}, //"Unused: Old Krazoa Palace",
 //  {  3693,    -37,    238/2,  0}, //"Unused: Old Krazoa Palace", where did these coords come from?
-    {-14242,   1284,  34243/2,  0}, //"Unused: CloudRunner to Race", manually added to globalma.bin
+    {-13593,   1280,  32067/2,  0}, //"Unused: CloudRunner to Race", manually added to globalma.bin
     {-12768,  -2364,  12376/2, -1} //"Unused: Dragon Rock Bottom"
 };
 
@@ -122,6 +122,7 @@ const char *warpDict[] = {
     "Cutscene: ",              //0x8E
     "Unused: ",                //0x8F
     "Ice Mountain - ",         //0x90
+    "CloudRunner ",            //0x91
 };
 const char *warpNames[] = {
     "\x80" "Outside",
@@ -156,8 +157,8 @@ const char *warpNames[] = {
     "\x86" "Dungeon",
     "\x86" "Entrance",
     "\x86" "Queen Cage",
-    "CloudRunner Race Start",
-    "CloudRunner Mine",
+    "\x91" "Race Start",
+    "\x91" "Mine",
     "\x87" "Bottom",
     "\x87" "End",
     "\x87" "SpellStone Platform",
@@ -172,7 +173,7 @@ const char *warpNames[] = {
     "\x89" "Front of Pyramid",
     "\x89" "Boss Door",
     "\x8A" "Landing Pad",
-    "\x8A" "CloudRunner Cage",
+    "\x8A" "\x91" "Cage",
     "\x8B" "Combat",
     "\x8B" "Strength",
     "\x8B" "Knowledge",
@@ -187,7 +188,7 @@ const char *warpNames[] = {
     "World Map",
     "\x8D" "Dinosaur Planet",
     "\x8D" "DarkIce Mines",
-    "\x8D" "CloudRunner Fortress",
+    "\x8D" "\x91" "Fortress",
     "\x8D" "Walled City",
     "\x8D" "Dragon Rock",
     "Game Well Maze",
@@ -205,7 +206,7 @@ const char *warpNames[] = {
 //    "\x8F" "Discovery Falls",
 //    "\x8F" "Willow Grove",
     "\x8F" "Old Krazoa Palace",
-    "\x8F" "CloudRunner to Race",
+    "\x8F" "\x91" "to Race",
     "\x8F" "Dragon Rock Bottom",
     NULL
 };

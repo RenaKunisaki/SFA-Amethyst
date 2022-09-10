@@ -256,9 +256,9 @@ class RenderStreamParser:
         else:
             # gx.setChanAmbColor(Channel0_RGB,color_803db63c)
             chan0_enable     = not (flags & ShaderFlags.IndoorOutdoorBlend)
-            chan0_amb_src    = GX.ColorSrc.REG
-            chan0_mat_src    = GX.ColorSrc.VTX
-            chan0_light_mask = GX.LightID.NULL
+            chan0_amb_src    = GX.ColorSrc.SRC_REG
+            chan0_mat_src    = GX.ColorSrc.SRC_VTX
+            chan0_light_mask = GX.LightID.LIGHT_NULL
             chan0_diff_fn    = GX.DiffuseFn.NONE
             chan0_attn_fn    = GX.AttnFn.NONE
 

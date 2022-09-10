@@ -47,17 +47,16 @@ class Parser:
             mesh2 = self._doParsedOps(ops, mName)
 
             # Write the bmesh data back to a new mesh.
-            mesh = bpy.data.meshes.new(mName+'.mesh')
-            mesh2.to_mesh(mesh)
-            mesh2.free()
-            meshObj = bpy.data.objects.new(mName, mesh)
-            mdata = meshObj.data
-            bpy.context.collection.objects.link(meshObj)
-            #self.parent._add_object_to_group(meshObj, mName)
-
-            #mdata.materials.append(bpy.data.materials[mat.name])
-
-            self.result[mName] = meshObj
+            if mesh2 is not None:
+                mesh = bpy.data.meshes.new(mName+'.mesh')
+                mesh2.to_mesh(mesh)
+                mesh2.free()
+                meshObj = bpy.data.objects.new(mName, mesh)
+                mdata = meshObj.data
+                bpy.context.collection.objects.link(meshObj)
+                #self.parent._add_object_to_group(meshObj, mName)
+                #mdata.materials.append(bpy.data.materials[mat.name])
+                self.result[mName] = meshObj
 
         # model:
         #'isMap': True,
@@ -97,7 +96,6 @@ class Parser:
                 pass
         self._addFacesToMesh(mesh, ops)
         return mesh
-
         # ops are:
         # 'drawQuads'
         # 'drawTris'
@@ -108,19 +106,6 @@ class Parser:
         # 'drawPoints'
         # 'textures'
         # 'mtxs'
-        # IIRC the way to define the objects is to create a
-        # mesh, add vertices to it, then add faces between
-        # those vertices.
-        # the game isn't using Direct format for any attrs
-        # so we can just assume a 1:1 correlation between
-        # entries in the buffers and vertices.
-        # the only thing "set vtx fmt" does is change whether
-        # the dlists contain an index that's 1 byte, 2 bytes,
-        # or not present at all.
-        # except, don't textures complicate that? since a
-        # shader can change how many texture coords are used,
-        # wouldn't there be different numbers of coords in the
-        # buffer for different parts of the mesh?
 
     def _doOpMatrix(self, op):
         mtxs = op[0] # dict of id => mat4
@@ -167,12 +152,16 @@ class Parser:
                 # save the vtx IDs; we need them later to create
                 # faces between them.
                 opVtxs[i]['id'] = vIds[vId]
+        if len(vtxs) == 0:
+            mesh.free()
+            return None
         for vtx in vtxs:
-            mesh.verts.new(( # swap Y/Z
+            pos = np.array([ # swap Y/Z and scale how the game does
                 vtx['POS'][0] / 8,
                 vtx['POS'][2] / 8,
                 vtx['POS'][1] / 8,
-            ))
+            ])
+            mesh.verts.new(pos)
         mesh.verts.ensure_lookup_table()
         mesh.verts.index_update()
         return mesh
@@ -181,9 +170,12 @@ class Parser:
         # iterate the draw ops to find which vertices are
         # part of which faces, and create those faces.
         def makeFace(vs):
-            face = mesh.faces.new(list(
-                map(lambda v: mesh.verts[v['id']], vs)))
-            # face.smooth = self.parent.operator.smooth_faces
+            try:
+                face = mesh.faces.new(list(
+                    map(lambda v: mesh.verts[v['id']], vs)))
+                # face.smooth = self.parent.operator.smooth_faces
+            except ValueError: # face already exists
+                pass
         for op in ops:
             if not op[0].startswith('draw'): continue
             opVtxs = op[2]

@@ -39,7 +39,7 @@ class App:
             #'MAPINFO':      self._unpackMapInfo,
             #'MAPS':         self._unpackMaps,
             #'MODANIM':      self._unpackModAnim,
-            #'MODELS':       self._unpackModels,
+            'MODELS':       self._unpackModels,
             #'globalma':     self._unpackGlobalMap,
             #'globalmap':    self._unpackGlobalMap,
             #'OBJECTS':      self._unpackObjects,
@@ -83,6 +83,23 @@ class App:
         return textures
 
 
+    def _unpackModels(self, inPath:str, outPath:str) -> list[Asset]:
+        """Unpack models to specified directory.
+
+        :param inPath: Path to file to unpack.
+        :param outPath: Path to directory to write to.
+        :returns: Assets that were extracted.
+
+        Writes model files to specified directory.
+        """
+        path, name = os.path.split(inPath)
+        models = self.game.modelMgr.unpackMapModels(path)
+        for model in models:
+            model.unpackToDir(outPath)
+        return models
+
+
+# XXX proper arg parsing
 if __name__ == '__main__':
     args = sys.argv[1:]
     action = args.pop(0)

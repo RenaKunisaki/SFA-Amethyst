@@ -3,11 +3,10 @@
 from __future__ import annotations
 import os
 import os.path
-from enum import Enum
 from PIL import Image
 import struct
 import xml.etree.ElementTree as ET
-from sfapacker.Asset import Asset # what the fuck
+from sfapacker.Asset import Asset
 from sfapacker.BinaryFile import BinaryFile
 from .Header import Header
 from .texture import decode_image, encode_image

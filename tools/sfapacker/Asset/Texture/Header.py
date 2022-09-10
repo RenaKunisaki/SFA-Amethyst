@@ -8,10 +8,10 @@ from ctypes import (
     c_float  as f32, # name "float" is already used
     c_double as f64)
 from sfapacker.MyStruct import MyStruct
-import xml.etree.ElementTree as ET
 from .GX import GX
 
 class Header(MyStruct):
+    """The header of a texture file on disc/in RAM."""
     # ^ denotes fields that are always 0 in the files on disc
     _fields_ = [
         ('next',                 u32), # ^00 Texture*

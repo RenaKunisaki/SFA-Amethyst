@@ -66,7 +66,7 @@ class Importer:
         :param file: The file to read from.
         """
         header = MapBlock.from_buffer_copy(file.read(sizeof(MapBlock)))
-        name = bytes(header.name).decode('utf-8')
+        name = bytes(header.name).replace(b'\0', b'').decode('utf-8')
 
         data = {
             'isMap': True,
@@ -82,11 +82,29 @@ class Importer:
             'renderInstrsReflective': file.readu8(header.nRenderInstrsReflective, header.renderInstrsReflective),
             'renderInstrsWater': file.readu8(header.nRenderInstrsWater, header.renderInstrsWater),
             'textureIds': file.reads32(header.nTextures, header.textures),
-            'displayLists': [DisplayListPtr, header.displayLists, header.nDlists],
-            'GCpolygons': [GCPolygon, header.GCpolygons, header.nPolygons],
-            'polygonGroups': [PolygonGroup, header.polygonGroups, header.nPolyGroups],
-            'shaders': [Shader, header.shaders, header.nShaders],
+            'displayLists': {
+                'type':  DisplayListPtr,
+                'offset':header.displayLists,
+                'count': header.nDlists,
+            },
+            'GCpolygons': {
+                'type':  GCPolygon,
+                'offset':header.GCpolygons,
+                'count': header.nPolygons
+            },
+            'polygonGroups': {
+                'type':  PolygonGroup,
+                'offset':header.polygonGroups,
+                'count': header.nPolyGroups
+            },
+            'shaders': {
+                'type':  Shader,
+                'offset':header.shaders,
+                'count': header.nShaders
+            },
         }
+        if type(data['textureIds']) is not list:
+            data['textureIds'] = [data['textureIds']]
         self._readObjs(data, file)
         self._readModel(data, file)
         return {'FINISHED'}
@@ -103,16 +121,15 @@ class Importer:
 
 
     def _readObjs(self, data, file):
-        # convert [type, offset, count] to list of objects.
+        # convert array definition to list of objects.
         # type must inheret ctypes.Structure.
         for name, val in data.items():
-            if type(val) is not list: continue
-            oType, offset, count = val
+            if type(val) is not dict: continue
             items = []
-            file.seek(offset)
-            for _ in range(count):
-                items.append(oType.from_buffer_copy(
-                    file.read(sizeof(oType))))
+            file.seek(val['offset'])
+            for _ in range(val['count']):
+                items.append(val['type'].from_buffer_copy(
+                    file.read(sizeof(val['type']))))
             data[name] = items
 
     def _readModel(self, data, file):

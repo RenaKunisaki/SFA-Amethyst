@@ -41,6 +41,7 @@ log = logger.logging.getLogger()
 # import our modules
 import bpy
 from .sfa.importer.ImportOperator import ImportOperator
+from .sfa.importer.Preferences import SfaPreferences
 
 
 # define Blender functions

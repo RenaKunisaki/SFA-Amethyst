@@ -1,6 +1,7 @@
 # this line allows methods in a class to be annotated with
 # a return type of that class.
 from __future__ import annotations
+import logging; log = logging.getLogger(__name__)
 import numpy as np
 import numpy.matlib
 import bpy
@@ -43,11 +44,12 @@ class Parser:
             stream = model[sName]
             reader = BitStreamReader(stream)
             parser = RenderStreamParser(self.gx)
-            ops = parser.execute(model, reader)
-            mesh2 = self._doParsedOps(ops, mName)
+            ops    = parser.execute(model, reader)
+            mesh2  = self._doParsedOps(ops, mName)
 
             # Write the bmesh data back to a new mesh.
             if mesh2 is not None:
+                log.debug("Creating mesh %r", mName)
                 mesh = bpy.data.meshes.new(mName+'.mesh')
                 mesh2.to_mesh(mesh)
                 mesh2.free()

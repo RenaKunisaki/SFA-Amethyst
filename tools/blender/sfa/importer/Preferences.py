@@ -6,17 +6,16 @@ class SfaPreferences(bpy.types.AddonPreferences):
     bl_idname = "import_scene.sfadventures"
 
     def _onUpdate(self, context):
-        print("SFA _onUpdate", context)
+        log.debug("_onUpdate %r", context)
 
-    debugDumpFiles = bpy.props.BoolProperty(
-        name="Dump debug info to files",
-        description="Create `sfa-SomeFile-dump.txt` files for debugging.",
-        default=False,
+    importWholeMap = bpy.props.BoolProperty(
+        name="Import Entire Map",
+        description="Import all modXX.bin files in the directory.",
+        default=True,
         options={'ANIMATABLE'},
         subtype='NONE',
         update=_onUpdate,
     )
 
     def draw(self, context):
-        print("SfaPreferences draw")
-        self.layout.prop(self, "debugDumpFiles")
+        self.layout.prop(self, "importWholeMap")

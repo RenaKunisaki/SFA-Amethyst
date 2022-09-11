@@ -37,7 +37,7 @@ class App:
             #'ENVFXACTIONS': self._unpackEnvFx,
             #'HITS':         self._unpackHits,
             #'MAPINFO':      self._unpackMapInfo,
-            #'MAPS':         self._unpackMaps,
+            #'MAPS':         self._unpackMapsBin,
             #'MODANIM':      self._unpackModAnim,
             'MODELS':       self._unpackModels,
             #'globalma':     self._unpackGlobalMap,
@@ -99,6 +99,20 @@ class App:
         return models
 
 
+    def unpackMapTable(self, outPath:str) -> None:
+        """Unpack global map info.
+
+        :param outPath: Path to file to write to.
+        """
+        maps  = self.game.mapMgr.readAllMapInfo()
+        eRoot = ET.Element('maps')
+        for mp in maps:
+            eRoot.append(self.game.mapMgr.mapInfoToXml(mp))
+        tree = ET.ElementTree(eRoot)
+        ET.indent(tree, space='\t', level=0)
+        tree.write(outPath)
+
+
 # XXX proper arg parsing
 if __name__ == '__main__':
     args = sys.argv[1:]
@@ -107,6 +121,15 @@ if __name__ == '__main__':
 
     if action == 'getTextureStats':
         app.game.texMgr.getTextureStats()
+
+    elif action == 'unpack':
+        inPath  = args.pop(0)
+        outPath = args.pop(0)
+        app.unpack(inPath, outPath)
+
+    elif action == 'unpackMapTable':
+        outPath = args.pop(0)
+        app.unpackMapTable(outPath)
 
     elif action in ('unpackTex', 'unpackTexPre'):
         outPath = args.pop(0)

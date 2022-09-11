@@ -2,6 +2,9 @@
 # a return type of that class.
 from __future__ import annotations
 from enum import IntEnum
+
+from ..Model import Model
+from ..MapBlock import MapBlock
 from .BitStreamReader import BitStreamReader
 from ...GX.GX import GX
 from ...GX.CP import CP
@@ -98,7 +101,7 @@ class RenderStreamParser:
     def __init__(self, gx) -> None:
         self.gx = gx
 
-    def execute(self, model:dict, reader:BitStreamReader, params={}):
+    def execute(self, model:Model, reader:BitStreamReader, params={}):
         """ Execute the instructions in the stream.
         :param model: The model to render.
         :param reader: Stream to read from.
@@ -107,7 +110,7 @@ class RenderStreamParser:
         self.model  = model
         self.reader = reader
         self.params = params
-        self.isMap  = model['isMap'] # is map block or character model?
+        self.isMap  = isinstance(model, MapBlock)
         self.VAT    = 5 if self.isMap else 6
 
         # current render state
@@ -285,7 +288,7 @@ class RenderStreamParser:
         if self.params.get('isGrass', False): return
         if self.shaderIdx == idx: return
 
-        self.shader = self.model['shaders'][idx]
+        self.shader = self.model.shaders[idx]
         self.shaderIdx = idx
         if self.shader is not None: self._handleShaderFlags()
         else:
@@ -310,8 +313,8 @@ class RenderStreamParser:
             tex = None
             if i < nLayers:
                 idx = self.shader.layer[i].texture
-                if idx >= 0 and idx in self.model['textureIds']:
-                    tex = self.model['textureIds'][idx]
+                if idx >= 0 and idx in self.model.textureIds:
+                    tex = self.model.textureIds[idx]
             textures.append((i, tex))
 
         self.result.append(['textures', textures])
@@ -321,27 +324,27 @@ class RenderStreamParser:
         """Call one of the model's display lists."""
         ops = self.reader
         idx = ops.read(8)
-        if idx >= len(self.model['displayLists']):
+        if idx >= len(self.model.displayLists):
             raise ValueError("Calling list %d but max is %d" % (
-                idx, len(self.model['displayLists'])))
+                idx, len(self.model.displayLists)))
 
         dlistData = {
-            'POS':  self.model['vertexPositions'],
-            'NRM':  None if self.isMap else self.model['vertexNormals'],
-            'COL0': self.model['vertexColors'],
-            'TEX0': self.model['vertexTexCoords'],
-            'TEX1': self.model['vertexTexCoords'],
-            'TEX2': self.model['vertexTexCoords'],
-            'TEX3': self.model['vertexTexCoords'],
-            'TEX4': self.model['vertexTexCoords'],
-            'TEX5': self.model['vertexTexCoords'],
-            'TEX6': self.model['vertexTexCoords'],
-            'TEX7': self.model['vertexTexCoords'],
+            'POS':  self.model.vertexPositions,
+            'NRM':  None if self.isMap else self.model.vertexNormals,
+            'COL0': self.model.vertexColors,
+            'TEX0': self.model.vertexTexCoords,
+            'TEX1': self.model.vertexTexCoords,
+            'TEX2': self.model.vertexTexCoords,
+            'TEX3': self.model.vertexTexCoords,
+            'TEX4': self.model.vertexTexCoords,
+            'TEX5': self.model.vertexTexCoords,
+            'TEX6': self.model.vertexTexCoords,
+            'TEX7': self.model.vertexTexCoords,
         }
 
-        dlist = self.model['displayLists'][idx]
-        self.model['file'].seek(dlist.list)
-        instrs = self.model['file'].read(dlist.size)
+        dlist = self.model.displayLists[idx]
+        self.model.file.seek(dlist.list)
+        instrs = self.model.file.read(dlist.size)
         self.result += self.gx.dlistParser.parse(instrs, dlistData)
 
 
@@ -359,7 +362,7 @@ class RenderStreamParser:
         triNrm = False
         aFlags = 0 if self.shader is None else self.shader.attrFlags
 
-        if self.isMap or self.model['header'].nBones < 2:
+        if self.isMap or self.model.header.nBones < 2:
             pass # GXSetCurrentMtx(0);
         else:
             sizes['PMTX'] = GX.AttrType.DIRECT
@@ -383,7 +386,7 @@ class RenderStreamParser:
             flags = 0 # 1:NoFog, 2:EXTRA_FUZZY, 4:DrawFuzz, 8:ForceFuzz
 
             nTextureMtxs_803dcc5c = 0
-            for idx in range(self.model['header'].nTexMtxs):
+            for idx in range(self.model.header.nTexMtxs):
                 if (((flags & 0xff) == 4) and (idx == 0)):
                     #if((nTextureMtxs_803dcc5c == 0) ||
                     #(FUN_8001d7f8(PTR_803dcc64,local_38,auStack52), local_38 != 0)) {
@@ -460,8 +463,8 @@ class RenderStreamParser:
              0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 0, 0,
             10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 0, 0)
 
-        nMax = (self.model['header'].nVtxGroups +
-            self.model['header'].nBones)
+        nMax = (self.model.header.nVtxGroups +
+            self.model.header.nBones)
 
         for i in range(count):
             iMtx = idxs[i]
@@ -469,7 +472,7 @@ class RenderStreamParser:
 
             # we only store the translation vector, not the
             # full transformation matrix.
-            xl = self.model['xlates'][iMtx]
+            xl = self.model.xlates[iMtx]
             mtxs[tbl[i]*3] = ( # mat4
                 1, 0, 0, 0,  0, 1, 0, 0,  0, 0, 1, 0,
                 xl[0], xl[1], xl[2], 1)

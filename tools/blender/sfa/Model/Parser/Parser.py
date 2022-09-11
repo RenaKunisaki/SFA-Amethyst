@@ -1,6 +1,7 @@
 # this line allows methods in a class to be annotated with
 # a return type of that class.
 from __future__ import annotations
+from ctypes import Union
 import logging; log = logging.getLogger(__name__)
 import numpy as np
 import numpy.matlib
@@ -8,40 +9,33 @@ import bpy
 import bmesh
 from .BitStreamReader import BitStreamReader
 from .RenderStreamParser import RenderStreamParser
+from ..Model import Model
+from ..MapBlock import MapBlock
 
 class Parser:
-    """Parses SFA models."""
+    """Parses SFA models and creates meshes for them."""
+
+    SCALE = 1/10
+    """Amount to scale models by."""
 
     def __init__(self, gx) -> None:
         self.gx = gx
 
-    def parse(self, model:dict) -> dict[str, bmesh]:
+    def parse(self, model:Model) -> dict[str, bmesh]:
         """Parse the given model.
 
-        :param model: Dict of model data/params.
+        :param model: Model to parse.
         :returns: Parsed model data.
         """
         self.model  = model
-        self.isMap  = model['isMap']
-        self.file   = model['file']
+        self.isMap  = isinstance(model, MapBlock)
+        self.file   = model.file
         self.result = {}
 
-        if self.isMap: streams = [
-            'renderInstrsMain',
-            'renderInstrsReflective',
-            'renderInstrsWater',
-        ]
-        else: streams = ['renderInstrs']
-
-        for sName in streams:
-            mName = model['name']
-            if sName == 'renderInstrsReflective':
-                mName += '.reflective'
-            elif sName == 'renderInstrsWater':
-                mName += '.water'
-            else: mName += '.main'
+        for sName, sDisp in model.RenderStreamOrder.items():
+            mName = model.name + sDisp
             self._resetMtxs()
-            stream = model[sName]
+            stream = model.renderStreams[sName]
             reader = BitStreamReader(stream)
             parser = RenderStreamParser(self.gx)
             ops    = parser.execute(model, reader)
@@ -60,25 +54,6 @@ class Parser:
                 #mdata.materials.append(bpy.data.materials[mat.name])
                 self.result[mName] = meshObj
 
-        # model:
-        #'isMap': True,
-        #'header': header,
-        #'file': file,
-        #'path': path,
-        #'name': name,
-        #'object': bpy.data.objects.new(name, None),
-        #'vertexPositions': file.reads32(header.nVtxs*6, header.vertexPositions),
-        #'vertexColors': file.readu32(header.nColors*2, header.vertexColors),
-        #'vertexTexCoords': file.reads32(header.nTexCoords*4, header.vertexTexCoords),
-        #'renderInstrsMain': file.readu8(header.nRenderInstrsMain, header.renderInstrsMain),
-        #'renderInstrsReflective': file.readu8(header.nRenderInstrsReflective, header.renderInstrsReflective),
-        #'renderInstrsWater': file.readu8(header.nRenderInstrsWater, header.renderInstrsWater),
-        #'textureIds': file.reads32(header.nTextures, header.textures),
-        #'displayLists': [DisplayListPtr, header.displayLists, header.nDlists],
-        #'GCpolygons': [GCPolygon, header.GCpolygons, header.nPolygons],
-        #'polygonGroups': [PolygonGroup, header.polygonGroups, header.nPolyGroups],
-        #'shaders': [Shader, header.shaders, header.nShaders],
-
         return self.result
 
 
@@ -92,7 +67,7 @@ class Parser:
         mesh = self._createMesh(ops)
         for op in ops:
             opName = op[0]
-            if opName == 'mtxs': self._doOpMatrix(op)
+            if   opName == 'mtxs':     self._doOpMatrix(op)
             elif opName == 'textures': self._doOpTextures(op)
             else: # draw
                 pass
@@ -157,13 +132,25 @@ class Parser:
         if len(vtxs) == 0:
             mesh.free()
             return None
+
+        offs = [0,0,0]
+        if self.isMap:
+            # the game scales vtxs by 1/8; this is independent
+            # of the global scaling factor we set above
+            offs[0] = self.model.xOffset * 640 / 8
+            offs[1] = self.model.header.yOffset / 8
+            offs[2] = self.model.zOffset * 640 / 8
         for vtx in vtxs:
-            pos = np.array([ # swap Y/Z and scale how the game does
-                vtx['POS'][0] / 8,
-                vtx['POS'][2] / 8,
-                vtx['POS'][1] / 8,
+            pos = np.array([
+                vtx['POS'][0]/8, vtx['POS'][1]/8,
+                vtx['POS'][2]/8, 1 ])
+            mtx = self.mtxs[vtx['PNMTXIDX']]
+            pos = pos @ mtx
+            mesh.verts.new([ # swap Y/Z for Blender
+                (pos.item(0) + offs[0]) * self.SCALE,
+                (pos.item(2) + offs[2]) * self.SCALE,
+                (pos.item(1) + offs[1]) * self.SCALE,
             ])
-            mesh.verts.new(pos)
         mesh.verts.ensure_lookup_table()
         mesh.verts.index_update()
         return mesh

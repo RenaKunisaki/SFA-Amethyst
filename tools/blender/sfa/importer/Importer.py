@@ -4,24 +4,24 @@ import bpy
 import bpy_extras
 import os
 import os.path
-import tempfile
-import shutil
-import struct
-import math
-from ctypes import sizeof
+import xml.etree.ElementTree as ET
 from ..BinaryFile import BinaryFile
 from ..Model.MapBlock import MapBlock
-from ..Model.Common import DisplayListPtr, PolygonGroup, \
-    GCPolygon, Shader
 from ..GX.GX import GX
 from ..Model.Parser.Parser import Parser
 
-
 class Importer:
+    """Imports models from SFA."""
+
+    maps:dict[str,dict] = {}
+    """Info from maps.xml, indexed by map dir name."""
+
+
     def __init__(self, operator, context):
         self.operator = operator
         self.context  = context
         self.gx       = GX()
+        self.maps     = {}
 
 
     @staticmethod
@@ -41,6 +41,38 @@ class Importer:
         self.wm   = bpy.context.window_manager
         self.path = path
         return self.importFile(path)
+
+    def _readMapsXml(self, path:str, force=False):
+        if len(self.maps) > 0 and not force: return
+        xmlDir = os.path.join(path, '..', '..', 'maps.xml')
+        try: file = open(xmlDir, 'rt')
+        except FileNotFoundError: return
+        xml = ET.parse(file)
+        file.close()
+
+        for eMap in xml.getroot().findall('map'):
+            mp = {'blocks':{}}
+            for k, v in eMap.attrib.items():
+                if k not in ('dir', 'name'):
+                    try: v = int(v, 0)
+                    except ValueError: pass
+                mp[k] = v
+            # many unsued maps point to animtest dir. don't
+            # reference them when trying to load the
+            # actual animtest map.
+            if 'dir' in mp and (
+            mp['dir'] != 'animtest' or mp.get('id',0) == 0x1A):
+                self.maps[mp['dir']] = mp
+            for eBlock in eMap.findall('block'):
+                mod = int(eBlock.get('mod'), 0)
+                sub = int(eBlock.get('sub'), 0)
+                mp['blocks']['%d:%d' % (mod,sub)] = {
+                    'mod':  mod,
+                    'sub':  sub,
+                    'idx':  int(eBlock.get('n'   ), 0),
+                    'unk1': int(eBlock.get('unk1'), 0),
+                    'unk2': int(eBlock.get('unk2'), 0),
+                }
 
 
     def importFile(self, path:str):
@@ -65,48 +97,35 @@ class Importer:
         :param path: The path of the file we're reading.
         :param file: The file to read from.
         """
-        header = MapBlock.from_buffer_copy(file.read(sizeof(MapBlock)))
-        name = bytes(header.name).replace(b'\0', b'').decode('utf-8')
+        dirs, name = os.path.split(path)
+        self._readMapsXml(dirs)
+        block = MapBlock(self.gx).readFromFile(file, path)
 
-        data = {
-            'isMap': True,
-            'header': header,
-            'file': file,
-            'path': path,
-            'name': name,
-            #'object': bpy.data.objects.new(name, None),
-            'vertexPositions': file.read(header.nVtxs*6, header.vertexPositions),
-            'vertexColors': file.read(header.nColors*2, header.vertexColors),
-            'vertexTexCoords': file.read(header.nTexCoords*4, header.vertexTexCoords),
-            'renderInstrsMain': file.readu8(header.nRenderInstrsMain, header.renderInstrsMain),
-            'renderInstrsReflective': file.readu8(header.nRenderInstrsReflective, header.renderInstrsReflective),
-            'renderInstrsWater': file.readu8(header.nRenderInstrsWater, header.renderInstrsWater),
-            'textureIds': file.reads32(header.nTextures, header.textures),
-            'displayLists': {
-                'type':  DisplayListPtr,
-                'offset':header.displayLists,
-                'count': header.nDlists,
-            },
-            'GCpolygons': {
-                'type':  GCPolygon,
-                'offset':header.GCpolygons,
-                'count': header.nPolygons
-            },
-            'polygonGroups': {
-                'type':  PolygonGroup,
-                'offset':header.polygonGroups,
-                'count': header.nPolyGroups
-            },
-            'shaders': {
-                'type':  Shader,
-                'offset':header.shaders,
-                'count': header.nShaders
-            },
-        }
-        if type(data['textureIds']) is not list:
-            data['textureIds'] = [data['textureIds']]
-        self._readObjs(data, file)
-        self._readModel(data, file)
+        # back up to see which directory this is in.
+        # should be "root/someMap/mod/modXX.XX.bin"
+        dirs = dirs.split(os.path.sep)
+        mapName = dirs[-2]
+        if mapName in self.maps:
+            mp   = self.maps[mapName]
+            name = name.split('.') # ['modXX', 'XX', 'bin']
+            mod  = int(name[0][3:])
+            sub  = int(name[1])
+            sx   = mp['sizeX']
+            bk   = mp['blocks'].get('%d:%d' % (mod,sub), None)
+            if bk is None:
+                log.warn("Block %d.%d not found on map grid for %s",
+                    mod, sub, mapName)
+                idx = 0
+            else:
+                idx = bk['idx']
+                block.xOffset = int(idx % sx)
+                block.zOffset = int(idx / sx)
+        else:
+            log.warn("Unrecognized map dir %r; can't determine block offsets",
+                mapName)
+
+        parser = Parser(self.gx)
+        parser.parse(block)
         return {'FINISHED'}
 
 
@@ -118,20 +137,3 @@ class Importer:
         """
         raise NotImplementedError
         return {'FINISHED'}
-
-
-    def _readObjs(self, data, file):
-        # convert array definition to list of objects.
-        # type must inheret ctypes.Structure.
-        for name, val in data.items():
-            if type(val) is not dict: continue
-            items = []
-            file.seek(val['offset'])
-            for _ in range(val['count']):
-                items.append(val['type'].from_buffer_copy(
-                    file.read(sizeof(val['type']))))
-            data[name] = items
-
-    def _readModel(self, data, file):
-        parser = Parser(self.gx)
-        result = parser.parse(data)

@@ -93,7 +93,7 @@ class Shader:
             texObj = self._loadTexture(layer.texture)
             if texObj is not None:
                 self.mat.use_nodes = True
-                material_output = self.mat.node_tree.nodes.get('Material Output')
+                #material_output = self.mat.node_tree.nodes.get('Material Output')
                 principled_BSDF = self.mat.node_tree.nodes.get('Principled BSDF')
 
                 tex_node = self.mat.node_tree.nodes.new('ShaderNodeTexImage')

@@ -35,7 +35,7 @@ compile_commands.json
 **/.cache/*
 
 # auto generated files
-amethyst/patchfiles/files/bitnames.dat
+patchfiles/files/bitnames.dat
 **/amethyst.arg
 
 # from https://github.com/github/gitignore

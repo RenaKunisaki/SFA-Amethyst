@@ -1,19 +1,19 @@
 {
 	"folders": [
 		{
-			"path": "amethyst"
+			"path": "."
 		},
 		{
-			"path": "data"
+			"path": "../browser"
 		},
 		{
-			"path": "wiki/StarFoxAdventures.wiki"
+			"path": "../defaultdol"
 		},
 		{
-			"path": "browser"
+			"path": "../misc"
 		},
 		{
-			"path": "speedrun"
+			"path": "../speedrun"
 		}
 	],
 	"settings": {

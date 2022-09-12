@@ -46,6 +46,7 @@ typedef struct PACKED AttachPoint {
 	u8    unk17;
 } AttachPoint;
 
+//I think the correct internal name for this is objdata
 typedef struct PACKED ObjectFileStruct {
 	float                    unk00;              //0x00
 	float                    scale;              //0x04

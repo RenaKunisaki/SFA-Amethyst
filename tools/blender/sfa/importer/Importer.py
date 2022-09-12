@@ -4,6 +4,7 @@ import bpy
 import bpy_extras
 import os
 import os.path
+from pathlib import Path
 import xml.etree.ElementTree as ET
 from ..BinaryFile import BinaryFile
 from ..Model.MapBlock import MapBlock
@@ -99,12 +100,15 @@ class Importer:
         """
         dirs, name = os.path.split(path)
         self._readMapsXml(dirs)
-        block = MapBlock(self.gx).readFromFile(file, path)
 
         # back up to see which directory this is in.
         # should be "root/someMap/mod/modXX.XX.bin"
-        dirs = dirs.split(os.path.sep)
+        dirs = Path(dirs).parts
         mapName = dirs[-2]
+
+        self.gx.setTexturePath(os.path.join(*dirs[0:-1]))
+        block = MapBlock(self.gx).readFromFile(file, path)
+
         if mapName in self.maps:
             mp   = self.maps[mapName]
             name = name.split('.') # ['modXX', 'XX', 'bin']

@@ -12,9 +12,10 @@ from ctypes import (BigEndianStructure, sizeof,
     c_float  as f32, # name "float" is already used
     c_double as f64)
 from ..Model.Common import DisplayListPtr, PolygonGroup, \
-    GCPolygon, Shader
+    GCPolygon
 from ..GX.GX import GX
 from .Model import Model
+from ..Shader import Shader
 
 class MapBlockHeader(BigEndianStructure):
     """The header of a map block file on disc/in RAM."""
@@ -89,6 +90,7 @@ class MapBlock(Model):
         self.xOffset  = 0
         self.zOffset  = 0
         self._readData()
+        self._readShaders()
 
         return self
 
@@ -105,8 +107,6 @@ class MapBlock(Model):
             header.GCpolygons, header.nPolygons)
         self.polygonGroups = self._readObjects(PolygonGroup, file,
             header.polygonGroups, header.nPolyGroups)
-        self.shaders = self._readObjects(Shader, file,
-            header.shaders, header.nShaders)
 
         self.renderStreams = {
             'main': file.readu8(header.nRenderInstrsMain, header.renderInstrsMain),
@@ -115,5 +115,21 @@ class MapBlock(Model):
         }
 
         # ensure a list even if only one item
-        if type(self.textureIds) is not list:
+        if type(self.textureIds) not in (list, tuple):
             self.textureIds = [self.textureIds]
+
+        # the game does this to force the texture IDs to be
+        # indices into TEX1
+        tIds = []
+        for tId in self.textureIds:
+            tIds.append(tId | 0x8000)
+        self.textureIds = tIds
+
+
+    def _readShaders(self):
+        self.shaders = []
+        for i in range(self.header.nShaders):
+            self.file.seek(self.header.shaders + (i*0x44))
+            shader = Shader(self)
+            shader.readFromFile(self.file)
+            self.shaders.append(shader)

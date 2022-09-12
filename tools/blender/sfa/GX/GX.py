@@ -1,7 +1,13 @@
 # this line allows methods in a class to be annotated with
 # a return type of that class.
 from __future__ import annotations
+import logging; log = logging.getLogger(__name__)
 from .Constants import GXConstants
+import bmesh
+import bpy
+import bpy_extras
+import os
+import os.path
 
 class GX(GXConstants):
     """GameCube GPU simulator.
@@ -17,6 +23,8 @@ class GX(GXConstants):
 
     def __init__(self) -> None:
         super().__init__()
+        self._materials = {} # ID => material
+        self._textures  = {} # ID => texture
 
         # import here to avoid dependency loop
         from .CP import CP
@@ -94,3 +102,54 @@ class GX(GXConstants):
     def setUseAlphaTest(self, enable:bool):
         self.useAlphaTest = enable
 
+
+    def setTexturePath(self, path:str):
+        """Set the path to load textures from."""
+        self._texturePath = path
+        log.debug("texture path = %r", path)
+
+
+    def loadTexture(self, tId:int):
+        """Load a game texture."""
+        if tId not in self._textures:
+            name = 'tex%04X' % tId
+            texture = bpy.data.textures.new(name, 'IMAGE')
+            texture.image = self._loadTextureImage(tId)
+            self._textures[tId] = texture
+        return self._textures[tId]
+
+
+    def _loadTextureImage(self, tId:int):
+        #if(id & 0x8000) then id & 0x7FFF is an index into TEX1.tab
+        #else, if(id >= 3000) then id (not id - 3000) is an index into TEXPRE.tab
+        #else, id is an index into TEX0.tab
+        path = self._texturePath
+        if tId & 0x8000:
+            path = os.path.join(path, 'TEX1',
+                '%04X.00.png' % (tId & 0x7FFF))
+        elif tId >= 3000:
+            path = os.path.join(path, '..', 'TEXPRE',
+                '%04X.00.png' % tId)
+        else:
+            path = os.path.join(path, 'TEX0',
+                '%04X.00.png' % tId)
+        image = bpy.data.images.load(path, check_existing=True)
+        #return bpy.data.images[name]
+        return image
+
+
+    def getMaterial(self, mId:str):
+        """Get or create a material with the given ID."""
+        if mId not in self._materials:
+            mat = bpy.data.materials.new(
+                "mat%d" % len(self._materials))
+
+            # XXX find the game settings for these
+            #mat.use_transparency = True
+            #mat.alpha = 1
+            #mat.specular_alpha = 1
+            #mat.specular_intensity = 0  # Do not make materials without specular map shine exaggeratedly.
+
+            self._materials[mId] = mat
+
+        return self._materials[mId]

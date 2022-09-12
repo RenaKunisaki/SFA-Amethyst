@@ -1,6 +1,7 @@
 # this line allows methods in a class to be annotated with
 # a return type of that class.
 from __future__ import annotations
+import logging; log = logging.getLogger(__name__)
 from enum import IntEnum
 
 from ..Model import Model
@@ -288,7 +289,12 @@ class RenderStreamParser:
         if self.params.get('isGrass', False): return
         if self.shaderIdx == idx: return
 
-        self.shader = self.model.shaders[idx]
+        try:
+            self.shader = self.model.shaders[idx]
+        except IndexError:
+            log.error("Selecting shader %d but max is %d (model: %s)",
+                idx, len(self.model.shaders)-1, self.model.name)
+            self.shader = None
         self.shaderIdx = idx
         if self.shader is not None: self._handleShaderFlags()
         else:

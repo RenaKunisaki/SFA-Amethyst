@@ -131,6 +131,11 @@ if __name__ == '__main__':
         outPath = args.pop(0)
         app.unpackMapTable(outPath)
 
+    elif action == 'packBlocks':
+        inPath  = args.pop(0)
+        outPath = args.pop(0)
+        app.game.mapMgr.packBlocks(inPath, outPath)
+
     elif action in ('unpackTex', 'unpackTexPre'):
         outPath = args.pop(0)
         if action == 'unpackTexPre':

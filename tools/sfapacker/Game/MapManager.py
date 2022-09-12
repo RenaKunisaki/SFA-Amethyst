@@ -1,6 +1,9 @@
+import os
 import os.path
 import struct
+from pathlib import Path
 import xml.etree.ElementTree as ET
+from ..Asset import Asset
 
 class MapManager:
     """Manages packing/unpacking maps."""
@@ -19,6 +22,9 @@ class MapManager:
 
     mapDirs:list[str] = []
     """List of map dir ID => dir name."""
+
+    mapDirsByName:dict[str,int] = {}
+    """Dict of map dir name => dir ID."""
 
 
     def __init__(self, game):
@@ -97,6 +103,71 @@ class MapManager:
         return eMap
 
 
+    def packBlocks(self, inPath:str, outPath:str):
+        """Pack map blocks into archive.
+
+        :param inPath: Path to directory containing blocks.
+        :param outPath: Path to directory to write bin/tab files.
+        """
+        self._readTables()
+        allBins = {}
+        allMods = {}
+        for fName in os.listdir(inPath):
+            if not (
+            fName.startswith('mod') and fName.endswith('.bin')):
+                continue
+            name, ext = os.path.splitext(fName)
+            name = name[3:] # remove "mod"
+            mod, sub = name.split('.', maxsplit=1)
+            mod = int(mod)
+            sub = int(sub)
+            if mod not in allBins:
+                allBins[mod] = []
+
+            # order matters
+            if mod not in allMods: allMods[mod] = {}
+            allMods[mod][sub] = True
+
+        for mod, subs in allMods.items():
+            for sub in range(max(subs.keys())):
+                if not (sub in subs): continue
+
+                name = 'mod%d.%d' % (mod, sub)
+                block = Asset(name, (mod*256)+sub)
+                path = os.path.join(inPath, name+'.bin')
+                with open(path, 'rb') as file:
+                    data = file.read()
+                data = block._compress(data)
+                pad  = len(data) % 32
+                if pad: data += b'\0' * (32-pad)
+                allBins[mod].append(data)
+
+        for mod, bins in allBins.items():
+            offset = 0
+            trkMod = mod
+            if trkMod >= 5: trkMod -= 1 # game does this
+            trkOffs = self.trkblk[trkMod]
+            print("trkBlk[%d] = 0x%X" % (trkMod, trkOffs))
+
+            path = os.path.join(outPath, 'mod%d' % mod)
+            fBin = open(path+'.zlb.bin', 'wb')
+            fTab = open(path+'.tab', 'wb')
+            fTab.write(b'\0' * trkOffs * 4)
+
+            for bin in bins:
+                fBin.write(bin)
+                fTab.write(struct.pack('>I', 0x1000_0000 | offset))
+                offset += len(bin)
+
+            # write terminator but NOT checksum
+            fTab.write(struct.pack('>I', 0xFFFFFFFF))
+            pad = fTab.tell() % 32
+            if pad: fTab.write(b'\0' * (32-pad))
+            fTab.close()
+            fBin.close()
+
+
+
     def _readTables(self, force=False):
         self._readTrkBlk(force)
         self._readDirIds(force)
@@ -150,7 +221,11 @@ class MapManager:
             data = dol.file.read(256)
             end  = data.find(b'\0')
             data = data[0:end]
-            self.mapDirs.append(data.decode('UTF-8'))
+            name = data.decode('UTF-8')
+            self.mapDirsByName[name] = len(self.mapDirs)
+            self.mapDirs.append(name)
+        # HACK because several deleted maps use this dir
+        self.mapDirsByName['animtest'] = 0x1A
 
 
     def _readGlobalMap(self, name:str="globalma.bin") \

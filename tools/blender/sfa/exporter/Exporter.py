@@ -106,6 +106,7 @@ class Exporter:
                 file.write(struct.pack('>h', int(v)))
 
             # go back and overwrite header with updated info
+            header.length = file.tell()
             file.seek(0)
             file.write(bytes(header))
 

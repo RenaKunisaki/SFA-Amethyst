@@ -26,15 +26,16 @@ class Importer:
 
 
     @staticmethod
-    def _add_object_to_group(ob, group_name):
-        # Get or create the required group.
-        group = bpy.data.groups.get(group_name,
-            bpy.data.groups.new(group_name))
+    def addObjToCollection(ob, colName):
+        # Get or create the required collection.
+        col = bpy.data.collections.get(colName,
+            bpy.data.collections.new(colName))
+        bpy.context.scene.collection.children.link(col)
 
         # Link the provided object to it.
-        if ob.name not in group.objects:
-            group.objects.link(ob)
-        return group
+        if ob.name not in col.objects:
+            col.objects.link(ob)
+        return col
 
 
     def run(self, path:str):

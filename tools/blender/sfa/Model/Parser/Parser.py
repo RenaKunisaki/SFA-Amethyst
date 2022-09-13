@@ -50,8 +50,15 @@ class Parser:
                 mesh2.free()
                 meshObj = bpy.data.objects.new(mName, mesh)
                 mdata = meshObj.data
-                bpy.context.collection.objects.link(meshObj)
-                #self.parent._add_object_to_group(meshObj, mName)
+
+                # add the new object to a collection.
+                col = bpy.data.collections.get(model.name, None)
+                if col is None:
+                    col = bpy.data.collections.new(model.name)
+                    bpy.context.scene.collection.children.link(col)
+                if meshObj.name not in col.objects:
+                    col.objects.link(meshObj)
+
                 self._setUvMaps(mdata)
 
                 for shader in model.shaders:
@@ -246,6 +253,8 @@ class Parser:
                     for loopIdx in poly.loop_indices:
                         loop = mdata.loops[loopIdx]
                         uvloop = mdata.uv_layers.active.data[loopIdx]
+                        # since we inverted the Y axis for geometry
+                        # we need to also invert it for texcoord.
                         #vtx = self.vtxsByIdx[loop.vertex_index]
                         #x, y = uv[vtx['id']]
                         try:

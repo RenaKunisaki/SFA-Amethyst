@@ -309,7 +309,6 @@ class RenderStreamParser:
                 True, # updateEnable
                 True, # alphaTest
             )
-            #XXX this must be a flag on the texture or something
             gx.setAlphaCompare(GX.Compare.GREATER, 0,
                 GX.AlphaOp.AND, GX.Compare.GREATER, 0)
 

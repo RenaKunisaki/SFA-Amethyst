@@ -12,6 +12,8 @@ from .RenderStreamParser import RenderStreamParser
 from ..Model import Model
 from ..MapBlock import MapBlock
 
+MAP_CELL_SIZE = 640
+
 class Parser:
     """Parses SFA models and creates meshes for them."""
 
@@ -149,9 +151,9 @@ class Parser:
         if self.isMap:
             # the game scales vtxs by 1/8; this is independent
             # of the global scaling factor we set above
-            offs[0] = self.model.xOffset * 640 / 8
+            offs[0] = self.model.xOffset * MAP_CELL_SIZE / 8
             offs[1] = self.model.header.yOffset / 8
-            offs[2] = self.model.zOffset * 640 / 8
+            offs[2] = self.model.zOffset * MAP_CELL_SIZE / 8
 
         #self.vtxsByIdx = vtxs
         for vtx in vtxs:

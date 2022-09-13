@@ -1,3 +1,7 @@
+BUG: turning off HUD also turns off the aim cursor to shoot fireballs.
+
+idea: a setting where the C-stick/D-pad cycle through items by just changing which one is equipped to Y instead of opening the menu, like ALTTP rando can do
+
 Btn  | Player 1    | Player 2 | Player 3 | Player 4
 L.St | Move        |          |          | FreeCam Move
 C.St | Item/Camera |          | Camera   | FreeCam Turn

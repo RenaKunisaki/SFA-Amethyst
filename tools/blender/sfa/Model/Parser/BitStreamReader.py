@@ -1,7 +1,6 @@
 # this line allows methods in a class to be annotated with
 # a return type of that class.
 from __future__ import annotations
-from multiprocessing.sharedctypes import Value
 
 class BitStreamReader:
     """Allows data to be read in arbitrary bit-lengths from a stream."""

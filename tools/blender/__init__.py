@@ -41,12 +41,14 @@ log = logger.logging.getLogger()
 # import our modules
 import bpy
 from .sfa.importer.ImportOperator import ImportOperator
-from .sfa.importer.Preferences import SfaPreferences
+from .sfa.exporter.ExportOperator import ExportOperator
+#from .sfa.importer.Preferences import SfaPreferences
 
 
 # define Blender functions
 __classes__ = (
     ImportOperator,
+    ExportOperator,
 )
 
 def register():
@@ -55,6 +57,8 @@ def register():
         bpy.utils.register_class(c)
     bpy.types.TOPBAR_MT_file_import.append(
         ImportOperator.menu_func_import)
+    bpy.types.TOPBAR_MT_file_export.append(
+        ExportOperator.menu_func_export)
 
 def unregister():
     log.debug("SFA UNREGISTER")
@@ -62,6 +66,8 @@ def unregister():
         bpy.utils.unregister_class(c)
     bpy.types.TOPBAR_MT_file_import.remove(
         ImportOperator.menu_func_import)
+    bpy.types.TOPBAR_MT_file_export.remove(
+        ExportOperator.menu_func_export)
 
 if __name__ == "__main__":
     register()

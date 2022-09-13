@@ -25,19 +25,6 @@ class Importer:
         self.maps     = {}
 
 
-    @staticmethod
-    def addObjToCollection(ob, colName):
-        # Get or create the required collection.
-        col = bpy.data.collections.get(colName,
-            bpy.data.collections.new(colName))
-        bpy.context.scene.collection.children.link(col)
-
-        # Link the provided object to it.
-        if ob.name not in col.objects:
-            col.objects.link(ob)
-        return col
-
-
     def run(self, path:str):
         """Perform the import."""
         self.wm   = bpy.context.window_manager

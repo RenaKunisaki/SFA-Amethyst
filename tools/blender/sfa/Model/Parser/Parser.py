@@ -35,6 +35,7 @@ class Parser:
         for sName, sDisp in model.RenderStreamOrder.items():
             mName = model.name + sDisp
             self._resetMtxs()
+            self.uvMaps = {}
             stream = model.renderStreams[sName]
             reader = BitStreamReader(stream)
             parser = RenderStreamParser(self.gx)
@@ -51,7 +52,10 @@ class Parser:
                 mdata = meshObj.data
                 bpy.context.collection.objects.link(meshObj)
                 #self.parent._add_object_to_group(meshObj, mName)
-                #mdata.materials.append(bpy.data.materials[mat.name])
+                self._setUvMaps(mdata)
+
+                for shader in model.shaders:
+                    mdata.materials.append(shader.mat)
                 self.result[mName] = meshObj
 
         return self.result
@@ -67,8 +71,8 @@ class Parser:
         mesh = self._createMesh(ops)
         for op in ops:
             opName = op[0]
-            if   opName == 'mtxs':     self._doOpMatrix(op)
-            elif opName == 'textures': self._doOpTextures(op)
+            if   opName == 'mtxs':   self._doOpMatrix(op, mesh)
+            elif opName == 'shader': self._doOpShader(op, mesh)
             else: # draw
                 pass
         self._addFacesToMesh(mesh, ops)
@@ -81,10 +85,10 @@ class Parser:
         # 'drawLines'
         # 'drawLineStrip'
         # 'drawPoints'
-        # 'textures'
+        # 'shader'
         # 'mtxs'
 
-    def _doOpMatrix(self, op):
+    def _doOpMatrix(self, op, mesh):
         mtxs = op[0] # dict of id => mat4
         for idx, mtx in mtxs.items():
             # is there really no better way!?
@@ -95,10 +99,11 @@ class Parser:
                 [mtx[12], mtx[13], mtx[14], mtx[15]],
             ])
 
-    def _doOpTextures(self, op):
-        textures = op[0] # list of textures
-        # or texture IDs (self.model.textures[n])
-        # XXX do something
+    def _doOpShader(self, op, mesh):
+        shader, shaderIdx = op[0], op[1]
+        #mesh.materials.append(shader.mat)
+        # nothing to do here. this is handled by
+        # _addFacesToMesh.
 
     def _createMesh(self, ops:list[list]) -> bmesh:
         mesh = bmesh.new()
@@ -140,17 +145,25 @@ class Parser:
             offs[0] = self.model.xOffset * 640 / 8
             offs[1] = self.model.header.yOffset / 8
             offs[2] = self.model.zOffset * 640 / 8
+
+        #self.vtxsByIdx = vtxs
         for vtx in vtxs:
             pos = np.array([
                 vtx['POS'][0]/8, vtx['POS'][1]/8,
                 vtx['POS'][2]/8, 1 ])
             mtx = self.mtxs[vtx['PNMTXIDX']]
             pos = pos @ mtx
+            # Blender has Y/Z swapped compared to game
+            # and uses CCW winding order while game uses
+            # CW. Correct this by swapping, inverting Y,
+            # and reversing the order of vertices in each
+            # face (in _addFacesToMesh).
             mesh.verts.new([ # swap Y/Z for Blender
-                (pos.item(0) + offs[0]) * self.SCALE,
-                (pos.item(2) + offs[2]) * self.SCALE,
-                (pos.item(1) + offs[1]) * self.SCALE,
+                (pos.item(0) + offs[0]) *  self.SCALE,
+                (pos.item(2) + offs[2]) * -self.SCALE,
+                (pos.item(1) + offs[1]) *  self.SCALE,
             ])
+            #log.debug("V %r", vtx)
         mesh.verts.ensure_lookup_table()
         mesh.verts.index_update()
         return mesh
@@ -158,14 +171,31 @@ class Parser:
     def _addFacesToMesh(self, mesh:bmesh, ops:list[list]):
         # iterate the draw ops to find which vertices are
         # part of which faces, and create those faces.
+        shaderIdx = None
+        for i in range(self.gx.MAX_TEXTURES):
+            self.uvMaps['TEX'+str(i)] = {}
+
         def makeFace(vs):
             try:
-                face = mesh.faces.new(list(
-                    map(lambda v: mesh.verts[v['id']], vs)))
-                # face.smooth = self.parent.operator.smooth_faces
+                # reverse because of opposite winding order
+                face = mesh.faces.new(reversed(list(
+                    map(lambda v: mesh.verts[v['id']], vs))))
+                #face.normal_flip()
+                #face.normal_update()
             except ValueError: # face already exists
-                pass
+                return
+            if shaderIdx is not None:
+                face.material_index = shaderIdx
+            # face.smooth = self.parent.operator.smooth_faces
+            for vtx in vs:
+                for i in range(self.gx.MAX_TEXTURES):
+                    tex = vtx.get('TEX'+str(i), None)
+                    if tex is not None:
+                        self.uvMaps['TEX'+str(i)][vtx['id']] = tex
+
         for op in ops:
+            if op[0] == 'shader':
+                shaderIdx = op[2]
             if not op[0].startswith('draw'): continue
             opVtxs = op[2]
             if op[0] == 'drawQuads':
@@ -177,12 +207,22 @@ class Parser:
                     makeFace(opVtxs[i:i+3])
 
             elif op[0] == 'drawTriStrip':
+                a, b = opVtxs[0], opVtxs[1]
+                which = False
                 for i in range(2, len(opVtxs), 1):
-                    makeFace(opVtxs[i-2:i+1])
+                    c = opVtxs[i]
+                    #makeFace(opVtxs[i-2:i+1])
+                    makeFace([a, b, c])
+                    if which: b = c
+                    else: a = c
+                    which = not which
 
             elif op[0] == 'drawTriFan':
+                a, b = opVtxs[0], opVtxs[1]
                 for i in range(2, len(opVtxs), 1):
-                    makeFace([opVtxs[1], opVtxs[i-1], opVtxs[i]])
+                    c = opVtxs[i]
+                    makeFace([a, b, c])
+                    b = c
 
             elif op[0] == 'drawLines':
                 for i in range(0, len(opVtxs), 2):
@@ -196,5 +236,19 @@ class Parser:
                 for i in range(0, len(opVtxs), 1):
                     makeFace(opVtxs[i:i+1])
 
-
-
+    def _setUvMaps(self, mdata):
+        # assign UV maps
+        for i in range(self.gx.MAX_TEXTURES):
+            uv = self.uvMaps['TEX'+str(i)]
+            if len(uv) > 0:
+                mdata.uv_layers.new(name='TEX'+str(i))
+                for _, poly in enumerate(mdata.polygons):
+                    for loopIdx in poly.loop_indices:
+                        loop = mdata.loops[loopIdx]
+                        uvloop = mdata.uv_layers.active.data[loopIdx]
+                        #vtx = self.vtxsByIdx[loop.vertex_index]
+                        #x, y = uv[vtx['id']]
+                        try:
+                            x, y = uv[loop.vertex_index]
+                            uvloop.uv.x, uvloop.uv.y = x, 1-y
+                        except KeyError: pass

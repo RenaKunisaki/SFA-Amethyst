@@ -313,17 +313,7 @@ class RenderStreamParser:
             gx.setAlphaCompare(GX.Compare.GREATER, 0,
                 GX.AlphaOp.AND, GX.Compare.GREATER, 0)
 
-        nLayers = 0 if (self.shader is None) else self.shader.nLayers
-        textures = []
-        for i in range(GX.MAX_TEXTURES):
-            tex = None
-            if i < nLayers:
-                idx = self.shader.layer[i].texture
-                if idx >= 0 and idx in self.model.textureIds:
-                    tex = self.model.textureIds[idx]
-            textures.append((i, tex))
-
-        self.result.append(['textures', textures])
+        self.result.append(['shader', self.shader, self.shaderIdx])
 
 
     def _renderOpCallList(self):

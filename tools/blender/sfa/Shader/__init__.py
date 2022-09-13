@@ -89,7 +89,8 @@ class Shader:
         self._loadTexture(data.auxTex2)
         self._loadTexture(data.texture18)
         self._loadTexture(data.furTexture)
-        for layer in data.layer:
+        for iLayer in range(self.nLayers):
+            layer = self.layer[iLayer]
             texObj = self._loadTexture(layer.texture)
             if texObj is not None:
                 self.mat.use_nodes = True
@@ -99,9 +100,18 @@ class Shader:
                 tex_node = self.mat.node_tree.nodes.new('ShaderNodeTexImage')
                 tex_node.image = texObj.image
 
-                self.mat.node_tree.links.new(
-                    tex_node.outputs[0], principled_BSDF.inputs[0])
+                links = self.mat.node_tree.links
+                links.new(
+                    tex_node.outputs['Color'],
+                    principled_BSDF.inputs['Base Color'])
+                links.new(tex_node.outputs['Alpha'],
+                    principled_BSDF.inputs['Alpha'])
 
+        if self.data.flags & (0x40000000 | 0x80000000):
+            self.mat.blend_method = 'BLEND'
+        elif self.data.flags & 0x400:
+            self.mat.blend_method = 'CLIP'
+        self.mat.use_backface_culling = (self.data.flags & 0x8) != 0
         return self
 
 

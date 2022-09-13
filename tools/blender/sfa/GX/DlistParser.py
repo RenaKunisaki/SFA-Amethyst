@@ -78,7 +78,7 @@ class DlistParser:
         elif op == 0xB0: cmd = 'drawLineStrip'
         elif op == 0xB8: cmd = 'drawPoints'
         vtxs = []
-        for i in range(nVtxs):
+        for _ in range(nVtxs):
             vtxs.append(self._readVertex(vat))
         self.result.append([cmd, vat, vtxs])
 
@@ -163,8 +163,9 @@ class DlistParser:
             else: raise ValueError(
                 "Invalid format %s for attribute %s" % (
                     field, fmt))
-            if fmt in (2,3) or vcd.get('BYTEDEQUANT', False):
-                val = val / (1 << shift)
+            if (fmt == 0 or fmt == 1) and vcd.get('BYTEDEQUANT', False):
+                val /= (1 << shift)
+            elif(fmt == 2 or fmt == 3): val /= (1 << shift)
             vals.append(val)
         return vals
 

@@ -151,6 +151,29 @@ if __name__ == '__main__':
         ET.indent(tree, space='\t', level=0)
         tree.write(os.path.join(outPath, 'assets.xml'))
 
+    elif action == 'unpackAllTex':
+        outPath = args.pop(0)
+        assets  = app.unpack('TEXPRE.bin', outPath)
+        maps    = app.game.mapMgr.readAllMapInfo()
+        for mp in maps:
+            dir = mp.get('dir', None)
+            if dir is None: continue
+            if dir == 'animtest' and mp.get('id', None) != 0x1A: continue
+            pOut = os.path.join(outPath, dir)
+            os.makedirs(pOut, exist_ok=True)
+            print("Unpack", pOut)
+            try:
+                assets += app.unpack(os.path.join(dir, 'TEX0.bin'), pOut)
+                assets += app.unpack(os.path.join(dir, 'TEX1.bin'), pOut)
+            except FileNotFoundError:
+                pass
+        eRoot = ET.Element('assets')
+        for asset in assets:
+            eRoot.append(asset.toXml())
+        tree = ET.ElementTree(eRoot)
+        ET.indent(tree, space='\t', level=0)
+        tree.write(os.path.join(outPath, 'assets.xml'))
+
     elif action == 'listTex':
         textures = app.game.texMgr.getTexturesInMap(args.pop(0))
         res = []

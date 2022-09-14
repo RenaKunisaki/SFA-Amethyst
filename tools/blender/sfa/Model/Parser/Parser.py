@@ -34,6 +34,16 @@ class Parser:
         self.file   = model.file
         self.result = {}
 
+        #col = bpy.data.collections.get(model.name, None)
+        #if col is None:
+        #    col = bpy.data.collections.new(model.name)
+        #    bpy.context.scene.collection.children.link(col)
+
+        # create an Empty as the parent
+        if self.isMap: empty = self._createEmptyForMapBlock()
+        # XXX else
+        bpy.context.scene.collection.objects.link(empty)
+
         for sName, sDisp in model.RenderStreamOrder.items():
             mName = model.name + sDisp
             self._resetMtxs()
@@ -52,14 +62,13 @@ class Parser:
                 mesh2.free()
                 meshObj = bpy.data.objects.new(mName, mesh)
                 mdata = meshObj.data
+                bpy.context.scene.collection.objects.link(meshObj)
 
                 # add the new object to a collection.
-                col = bpy.data.collections.get(model.name, None)
-                if col is None:
-                    col = bpy.data.collections.new(model.name)
-                    bpy.context.scene.collection.children.link(col)
-                if meshObj.name not in col.objects:
-                    col.objects.link(meshObj)
+                #if meshObj.name not in col.objects:
+                #    col.objects.link(meshObj)
+                # rather, set it as child of the empty
+                meshObj.parent = empty
 
                 self._setUvMaps(mdata)
 
@@ -68,6 +77,20 @@ class Parser:
                 self.result[mName] = meshObj
 
         return self.result
+
+
+    def _createEmptyForMapBlock(self):
+        x = (self.model.xOffset-0.5) * MAP_CELL_SIZE / 8
+        y = (self.model.zOffset-0.5) * MAP_CELL_SIZE / 8
+        z = self.model.header.yOffset / 8 # swap Y/Z
+        #x += (MAP_CELL_SIZE / 2) / 8
+        #y += (MAP_CELL_SIZE / 2) / 8
+        #z += ((self.model.header.yMax - self.model.header.yMin) / 2) / 8
+        empty = bpy.data.objects.new(self.model.name, None)
+        empty.location=(x*self.SCALE, -y*self.SCALE, z*self.SCALE)
+        empty.empty_display_type = 'CUBE'
+        empty.empty_display_size = (MAP_CELL_SIZE/2) / 8 * self.SCALE
+        return empty
 
 
     def _resetMtxs(self):
@@ -151,9 +174,11 @@ class Parser:
         if self.isMap:
             # the game scales vtxs by 1/8; this is independent
             # of the global scaling factor we set above
-            offs[0] = self.model.xOffset * MAP_CELL_SIZE / 8
-            offs[1] = self.model.header.yOffset / 8
-            offs[2] = self.model.zOffset * MAP_CELL_SIZE / 8
+            offs = [
+                (-MAP_CELL_SIZE/2) / 8,
+                0,
+                (-MAP_CELL_SIZE/2) / 8,
+            ]
 
         #self.vtxsByIdx = vtxs
         for vtx in vtxs:

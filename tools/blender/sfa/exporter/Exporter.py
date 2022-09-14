@@ -12,6 +12,7 @@ from ..BinaryFile import BinaryFile
 from ..Model.MapBlock import MapBlock, MapBlockHeader
 from ..GX.GX import GX
 from ..Model.Parser.Parser import Parser
+from ..Shader import ShaderData, ShaderLayer
 from .BitStreamWriter import BitStreamWriter
 
 class Exporter:
@@ -109,6 +110,14 @@ class Exporter:
             header.length = file.tell()
             file.seek(0)
             file.write(bytes(header))
+
+    def _buildShaderData(self, shader) -> bytes:
+        layer0 = ShaderLayer()
+        layer1 = ShaderLayer()
+        shader = ShaderData(
+            layer = [layer0, layer1],
+        )
+        return bytes(shader)
 
 
     def _buildStream(self, obj) -> bytes:

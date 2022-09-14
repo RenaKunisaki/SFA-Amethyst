@@ -134,7 +134,7 @@ class GX(GXConstants):
             path = os.path.join(path, 'TEX0',
                 '%04X.00.png' % tId)
         image = bpy.data.images.load(path, check_existing=True)
-        #return bpy.data.images[name]
+        image['id'] = tId
         return image
 
 
@@ -143,13 +143,6 @@ class GX(GXConstants):
         if mId not in self._materials:
             mat = bpy.data.materials.new(
                 "mat%d" % len(self._materials))
-
-            # XXX find the game settings for these
-            #mat.use_transparency = True
-            #mat.alpha = 1
-            #mat.specular_alpha = 1
-            #mat.specular_intensity = 0  # Do not make materials without specular map shine exaggeratedly.
-
             self._materials[mId] = mat
 
         return self._materials[mId]

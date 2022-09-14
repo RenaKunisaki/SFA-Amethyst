@@ -132,22 +132,6 @@ class RenderStreamParser:
             else: raise ValueError("Unknown render op %d at bit 0x%X" % (
                 op, self.reader.offset - 4))
 
-        # do this or else everything breaks for some reason
-        #self.batch.addFunction(() => {
-        #    self.gx.setShaderParams(
-        #        DefaultCull, # cull mode
-        #        GX.BlendMode.NONE, # blend mode
-        #        GX.BlendFactor.ONE, # sFactor
-        #        GX.BlendFactor.ZERO, # dFactor
-        #        GX.LogicOp.NOOP, # logicOp
-        #        true, # compareEnable
-        #        GX.Compare.LEQUAL, # compareFunc
-        #        true, # updateEnable
-        #        true, # alphaTest
-        #    )
-        #    self.gx.sync()
-        #})
-
         return self.result
 
     def _setInitialGxParams(self):

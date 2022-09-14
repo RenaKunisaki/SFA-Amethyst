@@ -83,6 +83,15 @@ class Shader:
 
         self.id   = self._makeId()
         self.mat  = self.gx.getMaterial(self.id)
+        self.mat['flags'] = '%08X' % data.flags
+        self.mat['attrFlags'] = '%02X' % data.attrFlags
+        self.mat['nLayers'] = data.nLayers
+        self.mat['tevMode0'] = '%02X' % data.layer[0].tevMode
+        self.mat['tevMode1'] = '%02X' % data.layer[1].tevMode
+        self.mat['texChain0'] = data.layer[0].enableTexChainStuff
+        self.mat['texChain1'] = data.layer[1].enableTexChainStuff
+        self.mat['scrollMtx0'] = data.layer[0].scrollingTexMtx
+        self.mat['scrollMtx1'] = data.layer[1].scrollingTexMtx
 
         self._loadTexture(data.auxTex0)
         self._loadTexture(data.auxTex1)

@@ -17,7 +17,7 @@ MAP_CELL_SIZE = 640
 class Parser:
     """Parses SFA models and creates meshes for them."""
 
-    SCALE = 1/10
+    SCALE = 1/1
     """Amount to scale models by."""
 
     def __init__(self, gx) -> None:

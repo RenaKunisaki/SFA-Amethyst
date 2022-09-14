@@ -19,7 +19,7 @@ class Exporter:
     """Exports models to SFA formats."""
 
     # XXX needs to be same as importer
-    SCALE = 1/10
+    SCALE = 1/1
 
     def __init__(self, operator, context):
         self.operator = operator

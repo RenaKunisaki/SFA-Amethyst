@@ -40,7 +40,10 @@ class Parser:
         #    bpy.context.scene.collection.children.link(col)
 
         # create an Empty as the parent
-        if self.isMap: empty = self._createEmptyForMapBlock()
+        if self.isMap:
+            empty = self._createEmptyForMapBlock()
+            empty['flags04'] = model.header.flags04
+            empty['unk06']   = model.header.unk06
         # XXX else
         bpy.context.scene.collection.objects.link(empty)
 

@@ -45,6 +45,7 @@ class Exporter:
         self.dlists = []
         self.streams = {}
         col = bpy.data.collections[name]
+        # XXX change to find empty instead of collection
         for stream in ('main', 'reflective', 'water'):
             try:
                 obj = col.objects[name+'.'+stream]
@@ -76,7 +77,7 @@ class Exporter:
             nDlists = len(self.dlists),
             name = nameBytes,
             yMin = int(self.yMin), yMax = int(self.yMax),
-            yOffset = 0, # XXX
+            yOffset = 0, # XXX use empty's Y pos
         )
         with open(path, 'wb') as file:
             file.write(bytes(header))
